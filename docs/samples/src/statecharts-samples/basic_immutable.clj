@@ -1,6 +1,6 @@
 ;; BEGIN SAMPLE
 ;; import proper ns
-(ns statecharts-samples.basic
+(ns statecharts-samples.basic-immuatable
   (:require [statecharts.core :as fsm]))
 
 ;; define the machine
@@ -23,23 +23,10 @@
     :on {:power-outage :red}
     }))
 
-;; define the service
-(def service (fsm/service machine))
+(def s1 (fsm/initialize machine)) ; {:value :red :context nil}
 
-;; start the service
-(fsm/start service)
+(def s2 (fsm/transition machine s1 {:type :timer})) ; {:value :green :context nil}
 
-;; prints :red
-(println (fsm/value service))
-
-;; send events to trigger transitions  
-(fsm/send service :timer)
-
-;; prints :green
-(println (fsm/value service))
-
-(fsm/send service :timer)
-;; prints :yellow
-(println (fsm/value service))
+(def s3 (fsm/transition machine s2 {:type :timer})) ; {:value yellow :context nil}
 
 ;; END SAMPLE
