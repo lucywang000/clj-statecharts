@@ -1,0 +1,9 @@
+{{ $samplePattern := "BEGIN SAMPLE((.|\n)*);; *END SAMPLE" }}
+{{ $sample := findRE $samplePattern  (readFile (.Get 0)) 1}}
+
+{{ range $sample }}
+    {{ $c := replaceRE "(BEGIN SAMPLE|;; *END SAMPLE)" "" . }}
+    {{ $c = trim $c "\n" }}
+    {{ $h := highlight $c "clojure" "" }}
+    {{ $h }}
+{{ end }}

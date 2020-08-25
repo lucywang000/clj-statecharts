@@ -1,0 +1,2 @@
+{:linters {:unresolved-symbol {:exclude [goog.DEBUG
+                                         (statecharts.macros/prog1 [<>])]}}}

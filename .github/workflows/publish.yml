@@ -1,0 +1,27 @@
+name: publish
+
+on: [push]
+
+jobs:
+
+  build:
+    # ubuntu 18.04 comes with lein + java8 installed
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Store token
+        run: |
+          cat >~/.netrc<<EOF
+          machine github.com
+          login lucywang000
+          password ${{ secrets.GITHUB_TOKEN }}
+          EOF
+
+      - name: Git checkout
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+          submodules: 'true'
+
+      - name: Deploy to GitHub Pages
+        run:
+          ./scripts/publish.sh

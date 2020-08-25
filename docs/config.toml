@@ -1,0 +1,8 @@
+baseURL = "https://lucywang000.github.io/clj-statecharts"
+languageCode = "en-us"
+title = "clj-statecharts"
+theme = "book"
+
+[params]
+
+BookMenuBundle = "/menu"

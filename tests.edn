@@ -1,0 +1,12 @@
+#kaocha/v1
+{:capture-output? true,
+ :color?          true,
+ :fail-fast?      true,
+ :plugins         [:kaocha.plugin/print-invocations
+                   :noyoda.plugin/swap-actual-and-expected],
+ :reporter        kaocha.report/documentation,
+ :tests           [{:id           :unit,
+                    :ns-patterns  ["statecharts.*-test$"],
+                    :source-paths ["src"],
+                    :test-paths   ["test"]}],
+ :watch?          false}
