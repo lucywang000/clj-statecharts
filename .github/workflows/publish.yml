@@ -4,9 +4,10 @@ on: [push]
 
 jobs:
 
-  build:
+  docs:
     # ubuntu 18.04 comes with lein + java8 installed
     runs-on: ubuntu-18.04
+    if: github.ref == 'refs/heads/master'
     steps:
       - name: Store token
         run: |
@@ -24,4 +25,4 @@ jobs:
 
       - name: Deploy to GitHub Pages
         run:
-          ./scripts/publish.sh
+          ./scripts/publish_docs.sh
