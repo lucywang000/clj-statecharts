@@ -7,4 +7,4 @@ theme = "book"
 
 BookMenuBundle = "/menu"
 BookRepo = "https://github.com/lucywang000/clj-statecharts"
-BookEditPath = "blob/master/docs"
+BookEditPath = "blob/master/docs/content"
