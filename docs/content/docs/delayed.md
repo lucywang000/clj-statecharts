@@ -27,7 +27,7 @@ you can see in the code snippet above.
 The amount of delay could be expressed as a context function.
 
 For example, in a state machine that manages a websocket connection,
-the reconnection delay could be calculated as a exponential backoff.
+the reconnection delay could be calculated as an exponential backoff.
 
 ```clojure
 (defn calculate-backoff

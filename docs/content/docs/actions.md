@@ -29,7 +29,7 @@ The actions value can also be a vector, and the actions would be executed one by
 
 ### Entry/Exit Actions
 
-Entry actions are defined on a state, and are executed whenever this state is entered.
+Entry actions are defined on a state, and are executed whenever this state is entered. Similar for exit actions - they are executed whenever leaving the state.
 
 ```clojure
 {:states
