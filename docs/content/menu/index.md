@@ -9,4 +9,4 @@ headless = true
 - [Delayed Transitions]({{< relref "/docs/delayed" >}})
 - Internals
   - [Concepts & Low Level APIs]({{< relref "/docs/low-level" >}})
-  - [Diffrence from XState]({{< relref "/docs/xstate" >}})
+  - [Difference from XState]({{< relref "/docs/xstate" >}})
