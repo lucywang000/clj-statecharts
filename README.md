@@ -1,4 +1,4 @@
-StateCharts for Clojure(Script). Inspired by [XState](https://github.com/davidkpiano/xstate).
+State Machine and StateCharts for Clojure(Script). Inspired by [XState](https://github.com/davidkpiano/xstate).
 
 [![Clojars Project](https://img.shields.io/clojars/v/clj-statecharts.svg)](https://clojars.org/clj-statecharts)
 

@@ -40,7 +40,7 @@ jobs:
           ./scripts/publish_docs.sh
 
   clojars:
-    if: github.ref == 'refs/heads/master'
+    if: contains(github.ref, 'refs/tags')
     runs-on: ubuntu-18.04
     needs: [test]
     steps:
