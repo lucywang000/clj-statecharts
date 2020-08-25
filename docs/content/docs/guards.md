@@ -1,5 +1,7 @@
 # Guarded Transitions
 
+## Use Guarded Transitions
+
 Also called "conditional transitions".
 
 When an event happens, the target state may depend on some condition.

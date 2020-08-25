@@ -4,6 +4,8 @@ title: "Nested States"
 
 # Nested States
 
+## About Nested States
+
 One of the greatest power of statecharts is that it could prevent the
 "states explosion" problem of a tradition finite state machine. The power 
 comes from the concept of "compound state" in statecharts:

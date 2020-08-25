@@ -3,6 +3,8 @@ title: "Delayed Transitions"
 ---
 # Delayed Transitions
 
+## Basic Delayed Transitions
+
 To specify a transition that shall happen automatically after some time, sue the `:after` keyword:
 
 ```clojure

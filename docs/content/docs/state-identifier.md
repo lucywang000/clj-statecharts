@@ -4,6 +4,8 @@ title: "State Identifiers"
 
 # State Identifiers
 
+## Syntax of State Identifiers
+
 In describing a transition, we need a way to represent the target state.
 
 A state is uniquely identified by the vector of its path from the
