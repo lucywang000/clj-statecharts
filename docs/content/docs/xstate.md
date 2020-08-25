@@ -10,7 +10,7 @@ title: "Difference from XState"
   the context object's prototype, because [it uses Object.assign when
   updating the
   context](https://github.com/davidkpiano/xstate/blob/v4.7.1/packages/core/src/utils.ts#L432).
-* For a CJLS project, xstate may be good enough, but we still need a solution for CLJ projects.
+* For a CLJS project, xstate may be good enough, but we still need a solution for CLJ projects.
 * Last but not least, xstate uses strings to represent states
   everywhere, but in clj/clsj we tend to use keywords instead.
 

@@ -34,14 +34,14 @@ Entry actions are defined on a state, and are executed whenever this state is en
 ```clojure
 {:states
  {:state1 {:entry some-action-on-entry
-       :exit some-action-on-exit
-       :on {...}}}}
+           :exit  some-action-on-exit
+           :on    {...}}}}
 
 ;; entry/exit can also be vector of actions
 {:states
  {:state1 {:entry [action1 action2]
-       :entry [action3 action4]
-       :on {...}}}}
+           :exit  [action3 action4]
+           :on    {...}}}}
 ```
 
 
