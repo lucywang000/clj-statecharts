@@ -16,7 +16,7 @@ To specify a transition that shall happen automatically after some time, sue the
                  :actions some-action}]}}}
 ```
 
-All transtion features like guards and actions could be used here, as
+All transition features like guards and actions could be used here, as
 you can see in the code snippet above.
 
 ## Dynamic Delay

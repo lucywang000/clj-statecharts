@@ -1,4 +1,4 @@
-# Guarded Transtions
+# Guarded Transitions
 
 Also called "conditional transitions".
 
@@ -23,4 +23,4 @@ To express this, add a `:guard` key in the transition map.
                       {:target :s3}]}}}}
 ```
 
-If `a-condition-fn` returns true, then the target is `:s2`. Othewise the target would be `:s3`.
+If `a-condition-fn` returns true, then the target is `:s2`. Otherwise the target would be `:s3`.

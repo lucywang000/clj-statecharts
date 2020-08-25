@@ -45,4 +45,4 @@ absolute syntax `[:> :s1 :s1.1]`
 (3) We want to represent the state `:s2` in the context of `:s1.1`,
 which means we had to use the absolute syntax here.
 
-(4) When the `target` is not given (or `nil`), it means an internal self-transtion.
+(4) When the `target` is not given (or `nil`), it means an internal self-transition.

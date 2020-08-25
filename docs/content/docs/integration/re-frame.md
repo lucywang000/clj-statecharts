@@ -10,13 +10,13 @@ as other effects (much like actions in a fsm/statecharts).
 
 There are two ways to integrate clj-statecharts with re-frame:
 
-* Integarate re-frame with the immutable-api
-* Or integarate with the service api
+* Integrate re-frame with the immutable-api
+* Or integrate with the service api
 
 And the `statecharts.re-frame` namespace provides some goodies for
 both ways of integration.
 
-## Integarate re-frame with the Immutable API
+## Integrate re-frame with the Immutable API
 
 It's pretty straight forward to integrate the immutable API of
 statecharts into re-frame's event handlers:

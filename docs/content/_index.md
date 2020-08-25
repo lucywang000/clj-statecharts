@@ -16,7 +16,7 @@ Most features of statecharts are supported:
 * Guarded transitions
 * Delayed transitions
 
-Head to [Get Started]({{< relref "docs/get-started.md" >}}) for a quickstart.
+Head to [Get Started]({{< relref "docs/get-started.md" >}}) for a quick start.
 
 ## About Statecharts
 

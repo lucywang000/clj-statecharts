@@ -44,7 +44,7 @@ If you do not want these actions to be executed, use `fsm/transition machine sta
 The immutable API provides a clean interface so you can integrate it
 into your own state management system like re-frame.
 
-However, sometimes it's more convient to provide a higher level api
+However, sometimes it's more convenient to provide a higher level api
 that could manage the state out of the box. Here comes the service api.
 
 The usage pattern for the service is very simple:
@@ -52,7 +52,7 @@ The usage pattern for the service is very simple:
 * Define a machine, which includes:
   * the states and transitions on each state
   * the initial state
-  * the intial context
+  * the initial context
 * Define a service that runs the machine
 * Send events to trigger transitions on this machine.
 

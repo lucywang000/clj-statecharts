@@ -45,7 +45,7 @@ Entry actions are defined on a state, and are executed whenever this state is en
 ```
 
 
-### Method Signature of the Action Funtions
+### Method Signature of the Action Functions
 
 The action function is invoked with three arguments: `(action-fn context event new-state)`
 
