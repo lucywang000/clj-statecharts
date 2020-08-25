@@ -4,16 +4,17 @@ title: "Re-frame Integration"
 
 # Re-frame Integration
 
-Re-frame itself is much like a state machine: an event triggers the
-change of the app-db (much like the `context` in statecharts), as well
-as other effects (much like actions in a fsm/statecharts).
+Re-frame itself is much like a simple state machine: an event triggers
+the change of the app-db (much like the `context` in statecharts), as
+well as execution of other effects (much like actions in a
+fsm/statecharts).
 
 There are two ways to integrate clj-statecharts with re-frame:
 
-* Integrate re-frame with the immutable-api
+* Integrate re-frame with the immutable api
 * Or integrate with the service api
 
-And the `statecharts.re-frame` namespace provides some goodies for
+The `statecharts.re-frame` namespace provides some goodies for
 both ways of integration.
 
 ## Integrate re-frame with the Immutable API
@@ -29,6 +30,8 @@ Here is an example of loading the list of friends of current user:
 {{< loadcode "samples/src/statecharts-samples/rf_integration.cljs" >}}
 
 Notice the use of `statecharts.rf/fx-action` to dispatch an effect in a fsm action.
+
+*Note that this way of integration doesn't work with [delayed transitions](({{< relref "/docs/delayed" >}})) yet.*
 
 ## Integrate with the Service API
 
