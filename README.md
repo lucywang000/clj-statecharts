@@ -20,3 +20,10 @@ Please visit https://lucywang000.github.io/clj-statecharts/ for the documentatio
 
 - [Statecharts 101](https://statecharts.github.io/)
 - [XState](https://github.com/davidkpiano/xstate), which inspired this project
+
+## License
+
+Copyright © 2020 Lucy Wang
+
+Distributed under the Eclipse Public License either version 1.0 or (at
+your option) any later version.

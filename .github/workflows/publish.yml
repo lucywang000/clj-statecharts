@@ -3,13 +3,25 @@ name: publish
 on: [push]
 
 jobs:
-
-  docs:
+  test:
     # ubuntu 18.04 comes with lein + java8 installed
     runs-on: ubuntu-18.04
-    if: github.ref == 'refs/heads/master'
     steps:
-      - name: Store token
+      - name: Git checkout
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+          submodules: 'true'
+
+      - name: Run Tests
+        run:
+          lein kaocha
+
+  docs:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Store gh token
         run: |
           cat >~/.netrc<<EOF
           machine github.com
@@ -26,3 +38,20 @@ jobs:
       - name: Deploy to GitHub Pages
         run:
           ./scripts/publish_docs.sh
+
+  clojars:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-18.04
+    needs: [test]
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+
+      - name: Deploy to clojars
+        env:
+          CLOJARS_USER: ${{ secrets.CLOJARS_USER }}
+          CLOJARS_TOKEN: ${{ secrets.CLOJARS_TOKEN }}
+        run:
+          lein deploy clojars

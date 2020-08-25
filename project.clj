@@ -1,14 +1,21 @@
 (defproject clj-statecharts "0.0.1-SNAPSHOT"
   :description "StateChart for Clojure(script)"
-  :url "https://statecharts.github.io/"
+  :url "https://github.com/lucywang000/clj-statecharts"
+  :license {:name "Eclipse Public License"
+            :url  "http://www.eclipse.org/legal/epl-v10.html"}
   :min-lein-version "2.5.0"
 
   :aliases {"kaocha" ["with-profile" "+dev" "run" "-m" "kaocha.runner"]
-            "test" ["version"]}
+            "test"   ["version"]}
 
   :dependencies [[org.clojure/clojure "1.10.1" :scope "provided"]
                  [medley "1.3.0"]
                  [metosin/malli "0.0.1-SNAPSHOT"]]
+
+  :deploy-repositories [["clojars" {:url           "https://clojars.org/repo"
+                                    :username      :env/clojars_user
+                                    :password      :env/clojars_token
+                                    :sign-releases false}]]
 
   :jvm-opts
   [
