@@ -19,9 +19,17 @@ The below document assumes you have a `require` statement like this:
 There are two layers of APIs in clj-statecharts:
 
 * There immutable api that deals with machines and states directly. This layer is purely functional.
-* The service api used in almost all the docs are the higher level one. It is stateful and easier to use.
+* The service api are the higher level one. It is stateful and easier to use.
 
 ### Part 1. The Immutable API
+
+Simply define a machine, which includes:
+
+* the states and transitions on each state
+* the initial state
+* the intial context
+
+And use the `fsm/initialize` and `fsm/transition` functions.
 
 {{< loadcode "samples/src/statecharts-samples/basic_immutable.clj" >}}
 
@@ -31,13 +39,13 @@ Returns the initial state of the machine. It also executes all the entry actions
 
 If you do not want these actions to be executed, use `fsm/initialize machine {:exec false}` instead.
 
-If the machine contains delayed transitions, it must have a
+If the machine contains [delayed transitions]({{< relref "docs/delayed.md" >}}), it must have a
 `:scheduler` key that satisfies the `statecharts.delayed.Scheduler`
 protocol.
 
 #### (fsm/transition machine state event)
 
-Returns the next state based the current state+event. It also executes all the entry/exit/transition actions.
+Returns the next state based the current state & event. It also executes all the entry/exit/transition actions.
 
 If you do not want these actions to be executed, use `fsm/transition machine state event {:exec false}` instead.
 
@@ -47,15 +55,12 @@ If you do not want these actions to be executed, use `fsm/transition machine sta
 The immutable API provides a clean interface so you can integrate it
 into your own state management system like re-frame.
 
-However, sometimes it's more convenient to provide a higher level api
-that could manage the state out of the box. Here comes the service api.
+However, sometimes it's more convenient to provide a higher level API
+that could manage the state out of the box. Here comes the service API.
 
-The usage pattern for the service is very simple:
+The usage pattern for the service API is very simple:
 
-* Define a machine, which includes:
-  * the states and transitions on each state
-  * the initial state
-  * the intial context
+* Define a machine
 * Define a service that runs the machine
 * Send events to trigger transitions on this machine.
 

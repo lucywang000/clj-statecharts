@@ -16,6 +16,8 @@ Most features of statecharts are supported:
 * Guarded transitions
 * Delayed transitions
 
+Also provides re-frame integration.
+
 Head to [Get Started]({{< relref "docs/get-started.md" >}}) for a quick start.
 
 ## About Statecharts
