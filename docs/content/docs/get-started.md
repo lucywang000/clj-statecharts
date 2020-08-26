@@ -18,8 +18,10 @@ The below document assumes you have a `require` statement like this:
 
 There are two layers of APIs in clj-statecharts:
 
-* There immutable api that deals with machines and states directly. This layer is purely functional.
-* The service api are the higher level one. It is stateful and easier to use.
+* The **Immutable API** that deals with machines and states
+  directly. This layer is purely functional.
+* The **Service API** are the higher level one. It is built on top of
+  the immutable API, stateful and easier to get started.
 
 ### Part 1. The Immutable API
 
@@ -37,7 +39,7 @@ And use the `fsm/initialize` and `fsm/transition` functions.
 
 Returns the initial state of the machine. It also executes all the entry actions of the initial states, if any.
 
-If you do not want these actions to be executed, use `fsm/initialize machine {:exec false}` instead.
+If you do not want these actions to be executed, use `(fsm/initialize machine {:exec false})` instead.
 
 If the machine contains [delayed transitions]({{< relref "docs/delayed.md" >}}), it must have a
 `:scheduler` key that satisfies the `statecharts.delayed.Scheduler`
@@ -47,10 +49,10 @@ protocol.
 
 Returns the next state based the current state & event. It also executes all the entry/exit/transition actions.
 
-If you do not want these actions to be executed, use `fsm/transition machine state event {:exec false}` instead.
+If you do not want these actions to be executed, use `(fsm/transition machine state event {:exec false})` instead.
 
 
-### Part 2. The Service API
+### Part 2. The Service API {#the-service-api}
 
 The immutable API provides a clean interface so you can integrate it
 into your own state management system like re-frame.
@@ -63,5 +65,7 @@ The usage pattern for the service API is very simple:
 * Define a machine
 * Define a service that runs the machine
 * Send events to trigger transitions on this machine.
+* Use functions like `fsm/value` or `fsm/context` to get the current
+  state value & context.
 
 {{< loadcode "samples/src/statecharts-samples/basic.clj" >}}

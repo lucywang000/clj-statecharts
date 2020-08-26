@@ -1,8 +1,8 @@
 ---
-title: "State Identifiers"
+title: "Identifying States"
 ---
 
-# State Identifiers
+# Identifying States
 
 ## Syntax of State Identifiers
 

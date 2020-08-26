@@ -11,9 +11,9 @@
     :context nil
     :states
     {:green  {:on
-              {:timer {:target :yellow
+              {:timer {:target  :yellow
                        :actions (fn [& _]
-                                 (println "transitioned to :yellow!"))
+                                  (println "transitioned to :yellow!"))
                        }}}
      :yellow {:on
               {:timer :red}}

@@ -1,3 +1,7 @@
+---
+title: "Guarded Transitions"
+---
+
 # Guarded Transitions
 
 ## Use Guarded Transitions

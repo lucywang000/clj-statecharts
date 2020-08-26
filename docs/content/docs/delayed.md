@@ -22,7 +22,7 @@ All transition features like guards and actions could be used here, as
 you can see in the code snippet above.
 
 *NOTE: delayed transitions currently only works in the CLJS with the
-[service API]({{< relref "/docs/get-started#part-2-the-service-api" >}}). CLJ support is going to be added soon.*
+[Service API]({{< relref "/docs/get-started#the-service-api" >}}). CLJ support is going to be added soon.*
 
 ## Dynamic Delay
 
