@@ -1,0 +1,11 @@
+{:source-paths
+ ["src"
+  "test"]
+
+ :dependencies [[medley             "1.3.0"]
+                [metosin/malli "0.0.1-SNAPSHOT"]]
+
+ :builds {:ci
+          {:target    :karma
+           :output-to "test-assets/karma/ci.js"
+           :ns-regexp "-test$"}}}
