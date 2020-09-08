@@ -82,6 +82,12 @@
             (is (= (:logout-times context) 1)))
         ]))
 
+(deftest test-override-context
+  (let [fsm (test-machine)
+        n (rand-int 100)
+        state (impl/initialize fsm {:context {:foo n}})]
+    (is (= (:context state) {:foo n}))))
+
 (defn fake-action-fn []
   (fn [& args]))
 

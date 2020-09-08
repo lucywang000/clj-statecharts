@@ -158,10 +158,12 @@
                      mt/default-value-transformer
                      {:name :fsm}))]
     (when-not (ma/validate T_Machine conformed)
-      ;; TODO:
-      ;; 1. ensure all target states exists: resolve them upon startup
-      ;; 2. ensure the initial target exists
-      (throw (ex-info "Invalid fsm machine spec" (ma/explain T_Machine conformed))))
+      ;; TODO: ensure the initial target exists
+      (let [reason (ma/explain T_Machine conformed)
+            msg "Invalid fsm machine spec"]
+        (js/console.log 123)
+        #?(:cljs (js/console.warn msg reason))
+        (throw (ex-info msg reason))))
     (validate-targets conformed)
     conformed))
 
@@ -414,15 +416,19 @@
 (defn initialize
   ([fsm]
    (initialize fsm nil))
-  ([{:keys [initial context states] :as fsm}
-    {:keys [exec]
-     :or {exec true}
+  ([{:keys [initial states] :as fsm}
+    {:keys [exec context]
+     :or {exec true
+          context nil}
      :as opts}]
    (let [initial (resolve-target [] initial)
          initial-nodes (expand-path fsm initial)
          initial-entry (->> initial-nodes
                             (mapcat :entry)
                             vec)
+         context (if (some? context)
+                   context
+                   (:context fsm))
          state {:value (expanded-path->id initial-nodes)
                 :context context
                 :event {:type :fsm/init}
