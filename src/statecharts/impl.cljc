@@ -161,8 +161,9 @@
       ;; TODO: ensure the initial target exists
       (let [reason (ma/explain T_Machine conformed)
             msg "Invalid fsm machine spec"]
-        (js/console.log 123)
-        #?(:cljs (js/console.warn msg reason))
+        #?(:cljs
+           (when ^boolean goog.DEBUG
+             (js/console.warn msg reason)))
         (throw (ex-info msg reason))))
     (validate-targets conformed)
     conformed))
