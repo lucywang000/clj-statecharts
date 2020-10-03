@@ -32,7 +32,10 @@
   (-> service state :context))
 
 (defn matches [state value]
-  (let [v1 (ensure-vector (:value state))
+  (let [v1 (ensure-vector
+            (if (map? state)
+              (:value state)
+              state))
         v2 (ensure-vector value)]
     (impl/is-prefix? v2 v1)))
 
