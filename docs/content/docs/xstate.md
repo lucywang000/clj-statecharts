@@ -18,3 +18,32 @@ title: "Difference from XState"
 
 * parallel states
 * invoking another machine/promise/actor
+
+## Different structure for the state map
+
+In xstate, the state object has two keys `value` and `context`
+
+```js
+{
+  value: "waiting",
+  context: {
+    user:   "jack",
+    backoff: 3000
+  }
+}
+```
+
+But in clj-statecharts the state map is a flat map:
+
+```clojure
+{:_value :waiting
+ :user   "jack"
+ :backoff 3000}
+```
+
+Where underscored keys are internal to clj-statecharts and the remaining are the
+application specific data (equivalent to the "context" of xstate).
+
+The reason behind this is that after using the xstate-like two-level map structure in some
+real world projects, it's obvious that the two-level map is hard to integrate into an
+existing project, e.g. putting the state inside a re-frame db.

@@ -183,8 +183,8 @@
        (= (some-> (:action action) namespace) "fsm")))
 
 (defn- execute-internal-action
-  [{:as fsm :keys [scheduler]}
-   context
+  [{:as _fsm :keys [scheduler]}
+   state
    transition-event
    {:as internal-action :keys [action event event-delay]}]
   (when-not scheduler
@@ -195,7 +195,7 @@
     (= action :fsm/schedule-event)
     (let [event-delay (if (pos-int? event-delay)
                         event-delay
-                        (event-delay context transition-event))]
+                        (event-delay state transition-event))]
       ;; #p [:execute-internal-action event]
       (fsm.d/schedule scheduler event event-delay))
 
@@ -207,18 +207,18 @@
 
 (defn- execute
   "Exeute the actions/entry/exit functions when transitioning."
-  [fsm {:keys [event] :as state}]
-  (reduce (fn [{:keys [context] :as new-state} action]
+  [fsm state event]
+  (reduce (fn [new-state action]
             (if (internal-action? action)
               (do
-                (execute-internal-action fsm context event action)
+                (execute-internal-action fsm new-state event action)
                 new-state)
-              (let [retval (action (:context new-state) event new-state)]
+              (let [retval (action new-state event)]
                 (if (instance? ContextAssignment retval)
-                  (assoc new-state :context (.-v retval))
+                  (merge new-state (.-v retval))
                   new-state))))
-          (dissoc state :actions)
-          (:actions state)))
+          (dissoc state :_actions)
+          (:_actions state)))
 
 (def PathElement
   "Schema of an element of a expanded path. We need the
@@ -417,31 +417,32 @@
 (defn initialize
   ([fsm]
    (initialize fsm nil))
-  ([{:keys [initial states] :as fsm}
+  ([{:keys [initial] :as fsm}
     {:keys [exec context]
-     :or {exec true
-          context nil}
-     :as opts}]
-   (let [initial (resolve-target [] initial)
+     :or   {exec    true
+            context nil}
+     :as   _opts}]
+   (let [initial       (resolve-target [] initial)
          initial-nodes (expand-path fsm initial)
          initial-entry (->> initial-nodes
                             (mapcat :entry)
                             vec)
-         context (if (some? context)
-                   context
-                   (:context fsm))
-         state {:value (expanded-path->id initial-nodes)
-                :context context
-                :event {:type :fsm/init}
-                :actions initial-entry}]
+         context       (if (some? context)
+                         context
+                         (:context fsm))
+         event {:type :fsm/init}
+         state         (assoc context
+                              :_state (expanded-path->id initial-nodes)
+                              ;; :_event event
+                              :_actions initial-entry)]
      (if exec
-       (execute fsm state)
+       (execute fsm state event)
        state))))
 
-(defn pick-transitions [context event transitions]
-  (m/find-first (fn [{:keys [guard] :as tx}]
+(defn pick-transitions [state event transitions]
+  (m/find-first (fn [{:keys [guard] :as _tx}]
                   (or (not guard)
-                      (guard context event)))
+                      (guard state event)))
                 transitions))
 
 (defn external-self-transition-actions
@@ -475,23 +476,24 @@
      :exit (reverse (mapcat :exit affected))}))
 
 (defn- resolve-transition
-  [{:as fsm   :keys [states]}
-   {:as state :keys [context value]}
+  [fsm
+   {:as state :keys [_state]}
    {:as event :keys [type]}]
-  (let [nodes (expand-path fsm value)
+  (let [nodes (expand-path fsm _state)
 
         [transitions affected-nodes]
         (prog1 (find-handler nodes type)
-          (check-or-throw (first <>) :event type :state value))
+          (check-or-throw (first <>) :event type :state _state))
 
-        tx (pick-transitions context event transitions)]
+        tx (pick-transitions state event transitions)]
     (if (nil? tx)
       ;; No matching transition, .e.g. guards not satisfied
-      {:value (expanded-path->id nodes)
-       :context context
-       :event   event
-       :actions []
-       :changed false}
+      (assoc state
+             :_state (expanded-path->id nodes)
+             ;; :_event event
+             ;; :_changed false
+             :_actions []
+             )
       (let [{:keys [target actions]} tx
 
             ;; target could be nil for a self-transition
@@ -532,11 +534,11 @@
                                external-transition?))
 
             actions (concat exit actions entry)]
-        {:value   new-value
-         :context context
-         :event   event
-         :changed (some? target)
-         :actions actions}))))
+        (assoc state
+               :_state   new-value
+               ;; :_event   event
+               ;; :_changed (some? target)
+               :_actions actions)))))
 
 (defn transition
   "Given a machine with its current state, trigger a transition to the
@@ -551,7 +553,7 @@
    (let [event (canon-event event)
          new-state (resolve-transition fsm state event)]
      (if exec
-       (execute fsm new-state)
+       (execute fsm new-state event)
        new-state))))
 
 (defn- valid-target? [fsm path]

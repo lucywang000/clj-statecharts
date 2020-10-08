@@ -16,7 +16,7 @@ To express this, add a `:guard` key in the transition map.
 * If none is selected, the event is ignored.
 
 ```clojure
-(defn a-condition-fn [context event]
+(defn my-condition-fn [state event]
   ;; returns a boolean
   )
 
@@ -24,9 +24,9 @@ To express this, add a `:guard` key in the transition map.
 {:states
   {:s1 {:on
         {:some-event [{:target :s2
-                       :guard a-condition-fn
+                       :guard my-condition-fn
                        :actions some-action}
                       {:target :s3}]}}}}
 ```
 
-If `a-condition-fn` returns true, then the target is `:s2`. Otherwise the target would be `:s3`.
+If `my-condition-fn` returns true, then the target is `:s2`. Otherwise the target would be `:s3`.

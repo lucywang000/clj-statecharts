@@ -23,10 +23,10 @@
     :on {:power-outage :red}
     }))
 
-(def s1 (fsm/initialize machine)) ; {:value :red :context nil}
+(def s1 (fsm/initialize machine)) ; {:_state :red}
 
-(def s2 (fsm/transition machine s1 {:type :timer})) ; {:value :green :context nil}
+(def s2 (fsm/transition machine s1 {:type :timer})) ; {:_state :green}
 
-(def s3 (fsm/transition machine s2 {:type :timer})) ; {:value yellow :context nil}
+(def s3 (fsm/transition machine s2 {:type :timer})) ; {:_state}
 
 ;; END SAMPLE

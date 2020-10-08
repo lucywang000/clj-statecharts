@@ -33,8 +33,8 @@
            :s5 {}
            :s6 {}}})
         service       (fsm/service fsm {:clock (fsm.sim/simulated-clock)})
-        is-state      #(is (= (:value @(.-state service)) %))
-        is-x          #(is (= (get-in @(.-state service) [:context :x]) %))
+        is-state      #(is (= (:_state @(.-state service)) %))
+        is-x          #(is (= (:x @(.-state service)) %))
         advance-clock (fn [ms]
                         ;; (println '--------------)
                         (fsm.sim/advance

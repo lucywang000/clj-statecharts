@@ -28,8 +28,8 @@ There are two layers of APIs in clj-statecharts:
 Simply define a machine, which includes:
 
 * the states and transitions on each state
-* the initial state
-* the intial context
+* the initial state value
+* the initial context
 
 And use the `fsm/initialize` and `fsm/transition` functions.
 
@@ -65,7 +65,6 @@ The usage pattern for the service API is very simple:
 * Define a machine
 * Define a service that runs the machine
 * Send events to trigger transitions on this machine.
-* Use functions like `fsm/value` or `fsm/context` to get the current
-  state value & context.
+* Use functions like `fsm/state` or `fsm/value` to get the state of the service.
 
 {{< loadcode "samples/src/statecharts-samples/basic.clj" >}}

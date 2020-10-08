@@ -47,22 +47,21 @@ Entry actions are defined on a state, and are executed whenever this state is en
 
 ### Method Signature of the Action Functions
 
-The action function is invoked with three arguments: `(action-fn context event new-state)`
+The action function is invoked with two arguments: `(state event)`
 
-* context is the context associated with the statecharts
+* state is the current state
 * event is the event that triggers the transition and execution of the action
-* new-state is the new state after the transition.
 
 
-## Updating the Context
+## Updating the State Context
 
 Actions can update the context of the state machine.
 
 ```clojure
 (require '[statecharts.core :as fsm :refer [assign]])
 
-(defn some-action [context event]
-  (update context :counter inc))
+(defn some-action [state event]
+  (update state :counter inc))
 
 
 {:states

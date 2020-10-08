@@ -15,12 +15,12 @@
 (defn inc-actions-data [k]
   (swap! actions-data update k safe-inc))
 
-(defn create-connection [context event state]
-  (is (= (:value state) :connecting))
+(defn create-connection [state event]
+  (is (= (:_state state) :connecting))
   (is (#{:connect :error} (:type event))))
 
-(defn update-connect-attempts [context event state]
-  (update context :connect-attempts (fnil inc 0)))
+(defn update-connect-attempts [state event]
+  (update state :connect-attempts (fnil inc 0)))
 
 (defn test-machine []
   (impl/machine
@@ -53,40 +53,39 @@
   (let [fsm (test-machine)
         state (impl/initialize fsm)
         _ (do
-            (is (= (:value state) :idle))
+            (is (= (:_state state) :idle))
             (is (= (:global-entry @actions-data) 1)))
 
-        {:keys [context] :as state} (impl/transition fsm state :connect)
+        {:keys [connect-attempts] :as state} (impl/transition fsm state :connect)
 
         _ (do
-            (is (= (:value state) :connecting))
-            (is (= (:connect-attempts context) 1)))
+            (is (= (:_state state) :connecting))
+            (is (= (:connect-attempts state) 1)))
 
         state (impl/transition fsm state :connected)
 
-        _ (is (= (:value state) :connected))
+        _ (is (= (:_state state) :connected))
 
-        {:keys [context] :as state} (impl/transition fsm state :error)
+        state (impl/transition fsm state :error)
 
         _ (do
-            (is (= (:disconnections context) 1))
+            (is (= (:disconnections state) 1))
             (is (= (:connected-exit @actions-data) 1))
-            (is (= (:value state) :connecting)))
+            (is (= (:_state state) :connecting)))
 
-        {:keys [context] :as state}
-        (impl/transition fsm state :logout)
+        state (impl/transition fsm state :logout)
 
         _ (do
-            (is (= (:value state) :wait-login))
+            (is (= (:_state state) :wait-login))
             (is (= (:global-logout @actions-data) 1))
-            (is (= (:logout-times context) 1)))
+            (is (= (:logout-times state) 1)))
         ]))
 
 (deftest test-override-context
   (let [fsm (test-machine)
         n (rand-int 100)
         state (impl/initialize fsm {:context {:foo n}})]
-    (is (= (:context state) {:foo n}))))
+    (is (= (:foo state) n))))
 
 (defn fake-action-fn []
   (fn [& args]))
@@ -116,16 +115,16 @@
         init-state (impl/initialize test-machine {:exec false})
 
         tx (fn [v event]
-             (impl/transition test-machine {:value v} event {:exec false}))
+             (impl/transition test-machine {:_state v} event {:exec false}))
         check-tx (fn [curr event _ expected]
                    (let [new-state (tx curr event)]
-                     (is (= (:value new-state) expected))))
+                     (is (= (:_state new-state) expected))))
         check-actions (fn [curr event _ expected]
                         (let [new-state (tx curr event)]
                           (is (= (:actions new-state) expected))))]
 
-    (is (= (:value init-state) :s1))
-    (is (= (:actions init-state) [entry0 entry1]))
+    (is (= (:_state init-state) :s1))
+    (is (= (:_actions init-state) [entry0 entry1]))
 
     (check-tx :s1 :e12 :=> :s2)
     ;; (check-actions :s1 :e12 :=> [exit1])
@@ -262,14 +261,15 @@
 
         tx (fn [v event]
              (impl/transition fsm
-                             {:value v :context (:context fsm)}
+                              (assoc (:context fsm)
+                                     :_state v)
                              event {:exec false}))
         check-tx (fn [curr event _ expected]
                    (let [new-state (tx curr event)]
-                     (is (= (:value new-state) expected))))
+                     (is (= (:_state new-state) expected))))
         check-actions (fn [curr event _ expected]
                         (let [new-state (tx curr event)]
-                          (is (= (:actions new-state) expected))))]
+                          (is (= (:_actions new-state) expected))))]
     {:fsm fsm
      :init-state init-state
      :check-tx check-tx
@@ -279,8 +279,8 @@
   (let [{:keys [init-state check-tx check-actions]} (prepare-nested-test)]
 
     (testing "initialize shall handle nested state"
-      (is (= (:value init-state) [:s1 :s1.1 :s1.1.1]))
-      (is (= (:actions init-state) [:entry0
+      (is (= (:_state init-state) [:s1 :s1.1 :s1.1.1]))
+      (is (= (:_actions init-state) [:entry0
                                     {:action      :fsm/schedule-event,
                                      :event       [:fsm/delay [] 100],
                                      :event-delay 100}

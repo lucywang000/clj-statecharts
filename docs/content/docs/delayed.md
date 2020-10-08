@@ -34,13 +34,13 @@ the reconnection delay could be calculated as an exponential backoff.
 ```clojure
 (defn calculate-backoff
   "Exponential backoff, with a upper limit of 15 seconds."
-  [context & _]
-  (-> (js/Math.pow 2 (:retries context))
+  [state & _]
+  (-> (js/Math.pow 2 (:retries state))
       (* 1000)
       (min 15000)))
 
-(defn update-retries [context & _]
-  (update context :retries inc))
+(defn update-retries [state & _]
+  (update state :retries inc))
 
 ;; Part of the machine definition
 {:states

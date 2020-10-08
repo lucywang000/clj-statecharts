@@ -26,26 +26,22 @@
   @(.-state service))
 
 (defn value [service]
-  (-> service state :value))
-
-(defn context [service]
-  (-> service state :context))
+  (-> service state :_state))
 
 (defn matches [state value]
   (let [v1 (ensure-vector
             (if (map? state)
-              (:value state)
+              (:_state state)
               state))
         v2 (ensure-vector value)]
     (impl/is-prefix? v2 v1)))
 
-(defn update-context
-  "Provide a pathway to modify the context of the state machine directly
+(defn update-state
+  "Provide a pathway to modify the state of a state machine directly
   without going through any event.
 
   Return the updated context.
   "
   [^statecharts.service.Service service f & args]
   (let [state (.-state service)]
-    (swap! state #(apply update % :context f args))
-    (:context @state)))
+    (swap! state #(apply f % args))))
