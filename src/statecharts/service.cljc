@@ -1,25 +1,8 @@
 (ns statecharts.service
   (:require [statecharts.impl :as impl]
-            [statecharts.delayed :refer [Scheduler]])
+            [statecharts.clock :as clock]
+            [statecharts.delayed :as fsm.d])
   (:refer-clojure :exclude [send]))
-
-(defprotocol Clock
-  (setTimeout [this f delay])
-  (clearTimeout [this id]))
-
-#?(:cljs
-   (deftype WallClock []
-     Clock
-     (setTimeout [this f delay]
-       (js/setTimeout f delay))
-     (clearTimeout [this id]
-       (js/clearTimeout id))))
-
-#?(:clj
-   (deftype WallClock []
-     Clock
-     (setTimeout [this f delay])
-     (clearTimeout [this id])))
 
 (defprotocol IService
   (start [this])
@@ -53,22 +36,8 @@
     (set! fsm (attach-fsm-scheduler this fsm_))
     nil))
 
-(deftype ServiceScheduler [^Service service ids]
-  Scheduler
-  (schedule [_ event delay]
-    (let [id (setTimeout (.-clock service)
-                         #(send service event)
-                         delay)]
-      (swap! ids assoc event id)))
-
-  (unschedule [_ event]
-    (when-let [id (get @ids event)]
-      (clearTimeout (.-clock service) id)
-      (swap! ids dissoc event))))
-
-
 (defn default-opts []
-  {:clock (WallClock.)})
+  {:clock (clock/wall-clock)})
 
 (defn service
   ([fsm]
@@ -83,4 +52,8 @@
                clock))))
 
 (defn attach-fsm-scheduler [service fsm]
-  (assoc fsm :scheduler (ServiceScheduler. service (atom nil))))
+  (assoc fsm :scheduler (fsm.d/make-scheduler
+                         ;; dispatch
+                         #(send service %)
+                         ;; clock
+                         (.-clock ^Service service))))

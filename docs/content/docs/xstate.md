@@ -41,9 +41,11 @@ But in clj-statecharts the state map is a flat map:
  :backoff 3000}
 ```
 
-Where underscored keys are internal to clj-statecharts and the remaining are the
-application specific data (equivalent to the "context" of xstate).
+In the state map, any underscored key (e.g. `_value`) is internal to
+clj-statecharts, which means your application code should not modify it (e.g. in an
+context function). The others are the application specific data (equivalent to the
+"context" of xstate).
 
-The reason behind this is that after using the xstate-like two-level map structure in some
-real world projects, it's obvious that the two-level map is hard to integrate into an
-existing project, e.g. putting the state inside a re-frame db.
+The reason behind this is that after using the xstate-like two-level map structure
+in some real world projects, it's obvious that the two-level map is hard to
+integrate into an existing project, e.g. putting the state inside a re-frame db.

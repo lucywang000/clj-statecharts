@@ -133,11 +133,21 @@
                        :s2 {:initial :s2.1
                             :states {:s2.1 {:on {:e2.1_2.2 {:target :s2.2}}}}}})
 
+(def T_Integrations
+  [:integrations {:optional true}
+   [:map {:closed true}
+    [:re-frame {:optional true}
+     [:map
+      [:path any?]
+      [:transition-event keyword?]
+      [:initialize-event keyword?]]]]])
+
 (def T_Machine
   [:map {:closed true
          :decode/fsm {:leave (comp
                               replace-delayed-place-holder
                               insert-delayed-transitions)}}
+   T_Integrations
    [:id keyword?]
    [:context {:optional true} any?]
    [:scheduler {:optional true} [:fn scheduler?]]

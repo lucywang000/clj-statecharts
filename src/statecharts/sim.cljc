@@ -1,5 +1,5 @@
 (ns statecharts.sim
-  (:require [statecharts.service :refer [Clock setTimeout clearTimeout]]))
+  (:require [statecharts.clock :refer [Clock setTimeout clearTimeout]]))
 
 (defprotocol ISimulatedClock
   (now [this])

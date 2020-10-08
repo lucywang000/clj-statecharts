@@ -1,13 +1,28 @@
 (ns statecharts.delayed
   (:require [clojure.walk :refer [postwalk]]
+            [statecharts.clock :as clock]
             [medley.core :as m]))
 
-(defprotocol Scheduler
+(defprotocol IScheduler
   (schedule [this event delay])
   (unschedule [this event]))
 
+(deftype Scheduler [dispatch ids clock]
+  IScheduler
+  (schedule [_ event delay]
+    (let [id (clock/setTimeout clock #(dispatch event) delay)]
+      (swap! ids assoc event id)))
+
+  (unschedule [_ event]
+    (when-let [id (get @ids event)]
+      (clock/clearTimeout clock id)
+      (swap! ids dissoc event))))
+
 (defn scheduler? [x]
-  (satisfies? Scheduler x))
+  (satisfies? IScheduler x))
+
+(defn make-scheduler [dispatch clock]
+  (Scheduler. dispatch (atom {}) clock))
 
 (def path-placeholder [:<path>])
 
@@ -26,7 +41,7 @@
                ;; this we extract the function name as the event
                ;; element instead.
                (delay-fn-id delay)]]
-    (def vd1 delay)
+    ;; (def vd1 delay)
     {:entry {:action :fsm/schedule-event
              :event-delay delay
              :event event}

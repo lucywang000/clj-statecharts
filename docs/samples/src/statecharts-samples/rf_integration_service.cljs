@@ -3,7 +3,7 @@
 (ns statecharts-samples.rf-integration-service
   (:require [statecharts.core :as fsm :refer [assign]]
             [re-frame.core :as rf]
-            [statecharts.rf :as fsm.rf]))
+            [statecharts.integrations.re-frame :as fsm.rf]))
 
 (def friends-path [(rf/path :friends)])
 
@@ -22,11 +22,11 @@
     :on-success #(fsm/send friends-service {:type :success-load :data %})
     :on-failure #(fsm/send friends-service {:type :fail-load :data %})}))
 
-(defn on-friends-loaded [ctx {:keys [data]}]
-  (assoc ctx :friends (:friends data)))
+(defn on-friends-loaded [state {:keys [data]}]
+  (assoc state :friends (:friends data)))
 
-(defn on-friends-load-failed [ctx {:keys [data]}]
-  (assoc ctx :error (:status data)))
+(defn on-friends-load-failed [state {:keys [data]}]
+  (assoc state :error (:status data)))
 
 (def friends-machine
   (fsm/machine

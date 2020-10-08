@@ -10,6 +10,17 @@
 
   :dependencies [[org.clojure/clojure "1.10.1" :scope "provided"]
                  [medley "1.3.0"]
+                 [re-frame "1.0.0"
+                  :scope "provided"
+                  :exclusions [[cljsjs/react]
+                               [cljsjs/react-dom]
+                               [net.cgrand/macrovich]
+                               [org.clojure/tools.logging]
+                               [cljsjs/create-react-class]]]
+                 [day8.re-frame/test "0.1.5"
+                  :scope "provided"
+                  :exclusions [[re-frame]]]
+                 [org.clojure/tools.logging "1.1.0" :scope "provided"]
                  [metosin/malli "0.0.1-20200924.063109-27"]]
 
   :deploy-repositories [["clojars" {:url           "https://clojars.org/repo"
