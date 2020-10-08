@@ -1,7 +1,7 @@
 (ns statecharts.delayed
   (:require [clojure.walk :refer [postwalk]]
             [statecharts.clock :as clock]
-            [medley.core :as m]))
+            [statecharts.utils :as u]))
 
 (defprotocol IScheduler
   (schedule [this event delay])
@@ -120,7 +120,7 @@
        (:states node)
        (update :states
                (fn [states]
-                 (m/map-kv (fn [id node]
+                 (u/map-kv (fn [id node]
                              [id
                               (replace-delayed-place-holder node (conj path id))])
                            states)))))))

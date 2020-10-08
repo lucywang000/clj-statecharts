@@ -9,7 +9,6 @@
             "test"   ["version"]}
 
   :dependencies [[org.clojure/clojure "1.10.1" :scope "provided"]
-                 [medley "1.3.0"]
                  [re-frame "1.0.0"
                   :scope "provided"
                   :exclusions [[cljsjs/react]

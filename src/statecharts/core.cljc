@@ -1,6 +1,5 @@
 (ns statecharts.core
-  (:require [medley.core :as m]
-            [statecharts.impl :as impl]
+  (:require [statecharts.impl :as impl]
             [statecharts.service :as service]
             [statecharts.utils :refer [ensure-vector]])
   (:refer-clojure :exclude [send]))

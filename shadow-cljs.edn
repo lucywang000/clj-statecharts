@@ -2,8 +2,7 @@
  ["src"
   "test"]
 
- :dependencies [[medley             "1.3.0"]
-                [metosin/malli "0.0.1-SNAPSHOT"]]
+ :dependencies [[metosin/malli "0.0.1-20200924.063109-27"]]
 
  :builds {:ci
           {:target    :karma

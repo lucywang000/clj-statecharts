@@ -1,13 +1,12 @@
 (ns statecharts.impl
-  (:require [medley.core :as m]
-            [malli.core :as ma]
+  (:require [malli.core :as ma]
             [malli.transform :as mt]
             [statecharts.delayed
              :as fsm.d
              :refer [insert-delayed-transitions
                      replace-delayed-place-holder
                      scheduler?]]
-            [statecharts.utils :refer [ensure-vector]]
+            [statecharts.utils :as u]
             [statecharts.macros :refer [prog1]])
   (:refer-clojure :exclude [send]))
 
@@ -245,7 +244,7 @@
 
 (defn extract-path-element [m]
   (->> (select-keys m [:on :entry :exit :id])
-       (m/remove-vals nil?)))
+       (u/remove-vals nil?)))
 
 (defn nested-state? [node]
   (:initial node))
@@ -270,7 +269,7 @@
   relationship, by walking the paths from the root of the fsm. If the
   leaf is a hierarchical state, resolve its initial child."
   [fsm path]
-  (let [path (ensure-vector path)
+  (let [path (u/ensure-vector path)
         accu (atom [])
         append #(swap! accu conj %)]
     (append (extract-path-element fsm))
@@ -347,7 +346,7 @@
   E.g. given current state [:s1 :s1.1] and a target of :s1.2, it
   should resolve to [:s1 :s1.2]"
   [base target]
-  (let [base (ensure-vector base)
+  (let [base (u/ensure-vector base)
         parent (vec (drop-last base))]
     (cond
       (nil? target)
@@ -450,7 +449,7 @@
        state))))
 
 (defn pick-transitions [state event transitions]
-  (m/find-first (fn [{:keys [guard] :as _tx}]
+  (u/find-first (fn [{:keys [guard] :as _tx}]
                   (or (not guard)
                       (guard state event)))
                 transitions))
@@ -507,7 +506,7 @@
       (let [{:keys [target actions]} tx
 
             ;; target could be nil for a self-transition
-            target (some-> target ensure-vector)
+            target (some-> target u/ensure-vector)
 
             ;; Here the base of resolve-target may not be the current
             ;; state node, but the one that does handle the event, e.g.
@@ -602,8 +601,8 @@
      (validate-targets fsm child (conj current-path name)))))
 
 (defn matches [state value]
-  (let [v1 (ensure-vector (:value state))
-        v2 (ensure-vector value)]
+  (let [v1 (u/ensure-vector (:value state))
+        v2 (u/ensure-vector value)]
     (is-prefix? v2 v1)))
 
 
