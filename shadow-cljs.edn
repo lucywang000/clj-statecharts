@@ -2,7 +2,13 @@
  ["src"
   "test"]
 
- :dependencies [[metosin/malli "0.0.1-20200924.063109-27"]]
+ :dependencies [[metosin/malli "0.1.0"]
+                [re-frame "1.0.0"
+                 :exclusions [[cljsjs/react]
+                              [cljsjs/react-dom]
+                              [cljsjs/create-react-class]]]
+                 [day8.re-frame/test "0.1.5"
+                  :exclusions [[re-frame]]]]
 
  :builds {:ci
           {:target    :karma

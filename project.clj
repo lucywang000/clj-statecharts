@@ -13,14 +13,11 @@
                   :scope "provided"
                   :exclusions [[cljsjs/react]
                                [cljsjs/react-dom]
-                               [net.cgrand/macrovich]
-                               [org.clojure/tools.logging]
                                [cljsjs/create-react-class]]]
                  [day8.re-frame/test "0.1.5"
                   :scope "provided"
                   :exclusions [[re-frame]]]
-                 [org.clojure/tools.logging "1.1.0" :scope "provided"]
-                 [metosin/malli "0.0.1-20200924.063109-27"]]
+                 [metosin/malli "0.1.0"]]
 
   :deploy-repositories [["clojars" {:url           "https://clojars.org/repo"
                                     :username      :env/clojars_user

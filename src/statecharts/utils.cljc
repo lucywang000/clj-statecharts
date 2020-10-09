@@ -5,6 +5,11 @@
     x
     [x]))
 
+(defn ensure-event-map [x]
+  (if (map? x)
+    x
+    {:type x}))
+
 (defn map-kv [f m]
   (->> m
        (map (fn [[k v]]
