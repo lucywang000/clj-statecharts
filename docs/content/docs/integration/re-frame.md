@@ -72,7 +72,7 @@ One way is to always cancel the current ajax request when requesting for a new o
      {:id :image-viewer
       :states {...}
       :integrations {:re-frame {:transition-event :viewer/fsm-event
-                                :epoch? true
+                                :epoch? true ;; (1)
                                 ...}}})
     (fsm.rf/integrate))
 ```
