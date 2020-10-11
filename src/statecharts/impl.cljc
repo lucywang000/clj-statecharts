@@ -544,7 +544,7 @@
 
             actions (concat exit actions entry)]
         (assoc state
-               :_state   new-value
+               :_state new-value
                ;; :_event   event
                ;; :_changed (some? target)
                :_actions actions)))))
