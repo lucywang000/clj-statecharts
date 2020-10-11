@@ -60,7 +60,7 @@ Actions can update the context of the state machine.
 ```clojure
 (require '[statecharts.core :as fsm :refer [assign]])
 
-(defn some-action [state event]
+(defn update-counter [state event]
   (update state :counter inc))
 
 
@@ -69,7 +69,19 @@ Actions can update the context of the state machine.
                              :action (assign update-counter)}}}}}
 ```
 
-Note the action is wrapped with `statecharts.core/assign`. Without this it's return value is ignored.
+Note the action is wrapped with `statecharts.core/assign`. Without this it's return value is ignored and the state context is not changed.
+
+The `event` arg of update-counter would be `{:type :some-event}`. Extra keys could be passed when calling `fsm/transition`:
+
+```clojure
+(let [event {:type :some-event
+             :k1 :v1
+             :k1 :v2}]
+  (fsm/transition machine current-state event))
+```
+
+And the `event` argument passed to the `update-counter` would have these `:k1`
+`:k2` keys etc.
 
 ## A Full Example
 
