@@ -23,7 +23,7 @@ There are two layers of APIs in clj-statecharts:
 * The **Service API** are the higher level one. It is built on top of
   the immutable API, stateful and easier to get started.
 
-### Part 1. The Immutable API
+### Part 1. The Immutable API {#the-immutable-api}
 
 Simply define a machine, which includes:
 
@@ -37,17 +37,15 @@ And use the `fsm/initialize` and `fsm/transition` functions.
 
 #### (fsm/initialize machine)
 
-Returns the initial state of the machine. It also executes all the entry actions of the initial states, if any.
+Returns the initial state of the machine. It also executes all the entry actions of
+the initial states, if any.
 
 If you do not want these actions to be executed, use `(fsm/initialize machine {:exec false})` instead.
 
-If the machine contains [delayed transitions]({{< relref "docs/delayed.md" >}}), it must have a
-`:scheduler` key that satisfies the `statecharts.delayed.Scheduler`
-protocol.
-
 #### (fsm/transition machine state event)
 
-Returns the next state based the current state & event. It also executes all the entry/exit/transition actions.
+Returns the next state based the current state & event. It also executes all the
+entry/exit/transition actions.
 
 If you do not want these actions to be executed, use `(fsm/transition machine state event {:exec false})` instead.
 

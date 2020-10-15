@@ -27,6 +27,6 @@
 
 (def s2 (fsm/transition machine s1 {:type :timer})) ; {:_state :green}
 
-(def s3 (fsm/transition machine s2 {:type :timer})) ; {:_state}
+(def s3 (fsm/transition machine s2 {:type :timer})) ; {:_state :yellow}
 
 ;; END SAMPLE

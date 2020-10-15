@@ -21,9 +21,6 @@ To specify a transition that shall happen automatically after some time, sue the
 All transition features like guards and actions could be used here, as
 you can see in the code snippet above.
 
-*NOTE: delayed transitions currently only works in the CLJS with the
-[Service API]({{< relref "/docs/get-started#the-service-api" >}}). CLJ support is going to be added soon.*
-
 ## Dynamic Delay
 
 The amount of delay could be expressed as a context function.
@@ -50,3 +47,11 @@ the reconnection delay could be calculated as an exponential backoff.
                  :after [{:delay calculate-backoff :target :connecting}]}
   :connected    {:on {:connection-closed :disconnected}}}}
 ```
+
+## Notes
+
+* Delayed transitions currently only works in the CLJS. CLJ support is going to be added soon.*
+
+* When using the [Immutable API]({{< relref "/docs/get-started#the-immutable-api"
+>}}), the machine spec must have a `:scheduler` key that satisfies the
+[`statecharts.delayed.Scheduler`](https://github.com/lucywang000/clj-statecharts/blob/master/src/statecharts/delayed.cljc#L6-L8) protocol.
