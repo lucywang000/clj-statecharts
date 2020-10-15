@@ -120,14 +120,27 @@
 (def T_After
   [:after {:optional true} T_DelayedTransitions])
 
+(def T_EventlessTransitions
+  [:always {:optional true} T_Transition])
+
+(defn insert-eventless-transitions [node]
+  (let [always (:always node)]
+    (if-not always
+      node
+      (let [{:keys [on]} node]
+        (update node :on assoc :fsm/always always)))))
+
 (def T_States
   [:schema
    {:registry
             {::state [:map {:closed true
-                            :decode/fsm {:leave insert-delayed-transitions}}
+                            :decode/fsm {:leave (comp
+                                                 insert-eventless-transitions
+                                                 insert-delayed-transitions)}}
                       T_After
                       T_Entry
                       T_Exit
+                      T_EventlessTransitions
                       T_Transitions
                       T_Initial
                       [:states {:optional true}
@@ -221,19 +234,23 @@
     (throw (ex-info (str "Unknown internal action " action) internal-action))))
 
 (defn- execute
-  "Exeute the actions/entry/exit functions when transitioning."
-  [fsm state event]
-  (reduce (fn [new-state action]
-            (if (internal-action? action)
-              (do
-                (execute-internal-action fsm new-state event action)
-                new-state)
-              (let [retval (action new-state event)]
-                (if (instance? ContextAssignment retval)
-                  (merge new-state (.-v retval))
-                  new-state))))
-          (dissoc state :_actions)
-          (:_actions state)))
+  "Execute the actions/entry/exit functions when transitioning."
+  ([fsm state event]
+   (execute fsm state event nil))
+  ([fsm state event {:keys [debug]}]
+   (reduce (fn [new-state action]
+             (if (internal-action? action)
+               (do
+                 (execute-internal-action fsm new-state event action)
+                 new-state)
+               (let [retval (action new-state event)]
+                 (if (instance? ContextAssignment retval)
+                   (merge new-state (.-v retval))
+                   new-state))))
+           (cond-> state
+             (not debug)
+             (dissoc :_actions))
+           (:_actions state))))
 
 (def PathElement
   "Schema of an element of a expanded path. We need the
@@ -379,7 +396,7 @@
    (collect-actions nodes new-nodes false))
   ([nodes new-nodes external-transition?]
    (let [[leave enter]
-         (loop [same         []
+         (loop [common       []
                 last-matched nil
                 nodes        nodes
                 new-nodes    new-nodes]
@@ -388,7 +405,7 @@
              (if (and a
                       b
                       (= a b))
-               (recur (conj same a) a (next nodes) (next new-nodes))
+               (recur (conj common a) a (next nodes) (next new-nodes))
                (if external-transition?
                  [(cons last-matched nodes)
                   (cons last-matched new-nodes)]
@@ -433,7 +450,7 @@
   ([fsm]
    (initialize fsm nil))
   ([{:keys [initial] :as fsm}
-    {:keys [exec context]
+    {:keys [exec debug context]
      :or   {exec    true
             context nil}
      :as   _opts}]
@@ -451,7 +468,7 @@
                               ;; :_event event
                               :_actions initial-entry)]
      (if exec
-       (execute fsm state event)
+       (execute fsm state event {:debug debug})
        state))))
 
 (defn pick-transitions [state event transitions]
@@ -490,6 +507,9 @@
     {:entry (mapcat :entry affected)
      :exit (reverse (mapcat :exit affected))}))
 
+(defn has-eventless-transition? [nodes]
+  (some #(get-in % [:on :fsm/always]) nodes))
+
 (defn- resolve-transition
   [fsm
    {:as state :keys [_state]}
@@ -505,10 +525,8 @@
       ;; No matching transition, .e.g. guards not satisfied
       (assoc state
              :_state (expanded-path->id nodes)
-             ;; :_event event
-             ;; :_changed false
-             :_actions []
-             )
+             :_changed false
+             :_actions [])
       (let [{:keys [target actions]} tx
 
             ;; target could be nil for a self-transition
@@ -550,10 +568,23 @@
 
             actions (concat exit actions entry)]
         (assoc state
+               :_nodes new-nodes
+               :_changed true
                :_state new-value
-               ;; :_event   event
-               ;; :_changed (some? target)
                :_actions actions)))))
+
+(defn -transition
+  [fsm state event {:keys [exec debug input-event] :or {exec true}}]
+  (let [new-state (resolve-transition fsm state event)]
+    (if exec
+      (execute
+       fsm
+       new-state
+       ;; input-event is set to the original event when event is :fsm/always for
+       ;; eventless transitions
+       (or input-event event)
+       {:debug debug})
+      new-state)))
 
 (defn transition
   "Given a machine with its current state, trigger a transition to the
@@ -564,12 +595,45 @@
 
   ([fsm state event]
    (transition fsm state event nil))
-  ([fsm state event {:keys [exec] :or {exec true}}]
-   (let [event (canon-event event)
-         new-state (resolve-transition fsm state event)]
-     (if exec
-       (execute fsm new-state event)
-       new-state))))
+  ([fsm state event {:as opts :keys [exec debug] :or {exec true}}]
+   (let [input-event
+         (canon-event event)
+
+         opts
+         (assoc opts :input-event input-event)
+
+         [new-state actions]
+         (loop [i 0
+                state (dissoc state :_actions)
+                actions []]
+
+           (when (> i 10)
+             (throw (ex-info (str "Possible dead loop on event" (:type input-event))
+                      {:state (:_state state)})))
+
+           (let [event
+                 (if (zero? i)
+                   input-event
+                   {:type :fsm/always})
+
+                 {:keys [_nodes _actions _changed] :as state}
+                 (-transition fsm state event opts)
+
+                 ;; _ #p {:_state (:_state state) :event (:type input-event)}
+
+                 actions
+                 (if _actions
+                   (into actions _actions)
+                   actions)]
+             (if (and _changed
+                      _nodes
+                      (has-eventless-transition? _nodes))
+               (recur (inc i) state actions)
+               [state actions])))]
+     ;; get rid of the internal fields
+     (cond-> (dissoc new-state :_changed :_nodes)
+       (or (not exec) debug)
+       (assoc :_actions actions)))))
 
 (defn- valid-target? [fsm path]
   (try

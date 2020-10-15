@@ -36,12 +36,12 @@ In xstate, the state object has two keys `value` and `context`
 But in clj-statecharts the state map is a flat map:
 
 ```clojure
-{:_value :waiting
+{:_state :waiting
  :user   "jack"
  :backoff 3000}
 ```
 
-In the state map, any underscored key (e.g. `_value`) is internal to
+In the state map, any underscored key (e.g. `_state`) is internal to
 clj-statecharts, which means your application code should not modify it (e.g. in an
 context function). The others are the application specific data (equivalent to the
 "context" of xstate).

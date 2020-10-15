@@ -94,8 +94,13 @@
   (let [[entry0
          entry1 exit1 a12 a13
          entry2 exit2 a21 a23
-         entry3 exit3 a31 a32]
+         entry3 exit3 a31 a32 a34 a35
+         entry4 exit4 exit5]
         (repeatedly 20 fake-action-fn)
+
+        event-ref (atom nil)
+        entry5 (fn [_ event]
+                 (reset! event-ref event))
 
         test-machine
         (impl/machine
@@ -108,20 +113,34 @@
                 :on {:e12 :s2
                      :e13 {:target :s3
                            :actions a13}}}
-           :s2 {:on {:e23 :s3}}
+           :s2 {:entry entry2
+                :exit exit2
+                :on {:e23 {:target :s3
+                           :actions a23}}}
            :s3 {:entry entry3
-                :on {:e31 :s1}}}})
+                :exit exit3
+                :always [{:guard (constantly false)
+                          :actions a34
+                          :target :s4}
+                         {:guard (constantly true)
+                          :actions a35
+                          :target :s5}]
+                :on {:e31 :s1}}
+           :s4 {:entry entry4
+                :exit exit3}
+           :s5 {:entry entry5
+                :exit exit5}}})
 
-        init-state (impl/initialize test-machine {:exec false})
+        init-state (impl/initialize test-machine {:debug true})
 
         tx (fn [v event]
-             (impl/transition test-machine {:_state v} event {:exec false}))
+             (impl/transition test-machine {:_state v} event {:debug true}))
         check-tx (fn [curr event _ expected]
                    (let [new-state (tx curr event)]
                      (is (= (:_state new-state) expected))))
         check-actions (fn [curr event _ expected]
                         (let [new-state (tx curr event)]
-                          (is (= (:actions new-state) expected))))]
+                          (is (= (:_actions new-state) expected))))]
 
     (is (= (:_state init-state) :s1))
     (is (= (:_actions init-state) [entry0 entry1]))
@@ -130,10 +149,21 @@
     ;; (check-actions :s1 :e12 :=> [exit1])
     ;; (check-tx :s1 :e13 :=> :s3)
     ;; (check-actions :s1 :e13 :=> [exit1 a13 entry3])
-    ))
+
+    (check-tx :s2 :e23 :=> :s5)
+    (check-actions :s2 :e23 :=> [exit2 a23 entry3 exit3 a35 entry5])
+
+    (testing "eventless transitions should pass the event along"
+      (tx :s2 {:type :e23
+               :k1 :v1
+               :k2 :v2})
+      (is (= (:k1 @event-ref) :v1))
+      (is (= (:k2 @event-ref) :v2)))))
 
 (defn guard-fn [state _]
   (> (:y state) 1))
+
+(defn root-a01 [& _])
 
 (defn nested-machine []
   (impl/machine
@@ -142,7 +172,8 @@
     :entry   :entry0
     :exit    :exit0
     :after   {100 [:. :s6]}
-    :on      {:e01           [:. :s1]
+    :on      {:e01           {:target [:. :s1]
+                              :actions root-a01}
               :e02           [:. :s2]
               :e0_0_internal {:actions :a_0_0_internal}
               :e0_0_external {:target [] :actions :a_0_0_external}}
@@ -169,8 +200,18 @@
                          {:entry :entry1.2
                           :exit  :exit1.2
                           :on    {:e1.2_1.2_internal {:actions :a1.2_1.2_internal}
+                                  :e1.2_1.3 {:target :s1.3
+                                             :actions :a1.2_1.3}
                                   :e1.2_1.2_external {:target  :s1.2
-                                                      :actions :a1.2_1.2_external}}}}}
+                                                      :actions :a1.2_1.2_external}}}
+                         :s1.3
+                         {:entry :entry1.3
+                          :exit  :exit1.3
+                          :always [{:target [:> :s2]
+                                    :actions :a1.3_2
+                                    :guard (constantly false)}
+                                   {:target [:> :s9]
+                                    :actions :a1.3_9}]}}}
               :s2 {:entry :entry2
                    :exit  :exit2
                    :on    {:e2_3          :s3
@@ -209,7 +250,11 @@
               :s7 {:after {2000 [{:target :s6
                                   :guard guard-fn}
                                  {:target :s8}]}}
-              :s8 {}}}))
+              :s8 {}
+              :s9 {:entry :entry9
+                   :exit :exit9
+                   :always {:target :s8
+                            :actions :a98}}}}))
 
 (deftest test-expand-path
   (let [fsm (nested-machine)]
@@ -318,7 +363,7 @@
 
     (testing "event handled by root"
       (check-tx :s3 :e01 :=> [:s1 :s1.1 :s1.1.1]))
-      (check-actions [:s3] :e01 :=> [:exit3 :entry1 :entry1.1 :entry1.1.1])
+      (check-actions [:s3] :e01 :=> [:exit3 root-a01 :entry1 :entry1.1 :entry1.1.1])
       ))
 
 (deftest test-self-transitions
@@ -495,9 +540,20 @@
               :s2 {}}}
     #"target.*s2"
 
+    {:id :fsm
+     :initial :s1
+     :states {:s1 {:after {1000 :s2}}}}
+    #"target.*s2"
+
+    {:id :fsm
+     :initial :s1
+     :states {:s1 {:always {:guard :g12
+                            :target :s2}}}}
+    #"target.*s2"
+
     ))
 
-(deftest ^:focus test-delayed-transition-unit
+(deftest test-delayed-transition-unit
   (let [{:keys [fsm init-state check-tx check-actions]} (prepare-nested-test)]
 
     (let [{:keys [entry exit on] :as s6} (get-in fsm [:states :s6])]
@@ -520,3 +576,28 @@
              [{:guard guard-fn
                :target :s6}
               {:target :s8}])))))
+
+(deftest test-nested-eventless-transition
+  (let [{:keys [init-state check-tx check-actions]} (prepare-nested-test)]
+    (check-tx [:s1 :s1.2] :e1.2_1.3 :=> :s8)
+    (check-actions [:s1 :s1.2] :e1.2_1.3
+                   :=> [:exit1.2 :a1.2_1.3 :entry1.3
+                        :exit1.3 :exit1
+                        :a1.3_9 :entry9 :exit9 :a98])))
+
+(deftest test-eventless-transtions-iterations
+  (let [test-machine
+        (impl/machine
+         {:id :test
+          :initial :s1
+          :context {:x 100}
+          :states
+          {:s1 {:on {:e12 {:target :s2
+                           :actions (assign (fn [state _]
+                                              (assoc state :x 200)))}}}
+           :s2 {:always {:target :s3
+                         :guard (fn [{:keys [x]} _]
+                                  (= x 200))}}
+           :s3 {}}})]
+    (is (= (:_state (impl/transition test-machine {:_state :s1} :e12))
+           :s3))))

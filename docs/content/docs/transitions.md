@@ -27,15 +27,17 @@ Some syntax sugars:
 ```clojure
 {:states {:s1
           {:on {:event1 {:target  :s2
-                         :actions [action-fn1 action-fn2] ;; (1)
-                         }
-                :event2 :s3 ;; (2)
-                }}}} 
+                         :actions [action-fn1 action-fn2]} ;; (1)
+                :event2 :s3}}}}                            ;; (2)
 ```
 
 (1) The actions could be a vector of multiple action functions to execute
 
 (2) If there is no actions, the transition could be simplified to be a single
+
+Please note that event names could be any keywords, with one exception: **keywords
+namespace "fsm" is considered reserved for clj-statecharts's internal use**, so do
+not use event names like `:fsm/foo` in your application code.
 
 
 ## Internal & External Transitions {#internal-external-transitions}
@@ -102,4 +104,51 @@ be** executed.
 
 (2) For event `:event1_1_external`, the target state is explicitly
 provided as itself, so the entry/exit actions of `:s1` **would be**
+executed.
+
+## EventLess Transitions
+
+Quoting [XState doc](https://xstate.js.org/docs/guides/transitions.html#eventless-transitions):
+
+An eventless transition is a transition that is always taken when the machine is in
+the state where it is defined, and when its guards evaluates to true. They are
+always checked when the state is first entered, before handling any other events.
+Eventless transitions are defined on the :always key of the state node:
+
+Given the next state machine:
+
+```clojure
+{:states {:s1 {:entry entry1
+               :exit exit1
+               :on {:e12 :s2
+                    :actions action12}}
+          :s2 {:entry entry2
+               :exit exit2
+               :always [{:guard guard23
+                         :target :s3
+                         :actions action23}
+                        {:guard guard24
+                         :target :s4
+                         :actions action23}]
+               :on {:e23 :s3}}
+          :s3 {:entry entry3}
+          :s4 {}}}
+```
+
+Assume current state is `:s1`, and event `:e12` happens.
+- The target state is `:s2`. Because :s2 has eventless transitions defined, it
+  would immediately evaluates the guard function `guard23`.
+- If `guard23` returns a truthy value, the machine would transition to state `:s3`.
+  In this case these actions would be executed one by one:
+    - exit1
+    - action12
+    - entry2
+    - exit2
+    - action23
+    - entry3
+- Otherwise `guard24` would be evaluated. If `guard24` returns truthy, the machine
+  would transition to `:s4` (and similarly a list of actions would be executed).
+  Otherwise it would stay in `:s2`.
+
+The event args that accompanies `:e12` would be passed to every action that is
 executed.
