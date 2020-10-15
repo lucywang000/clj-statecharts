@@ -132,6 +132,9 @@
     ;; (check-actions :s1 :e13 :=> [exit1 a13 entry3])
     ))
 
+(defn guard-fn [state _]
+  (> (:y state) 1))
+
 (defn nested-machine []
   (impl/machine
    {:id      :fsm
@@ -203,7 +206,10 @@
                         }}
               :s6 {:after [{:delay  1000
                             :target :s7}]}
-              :s7 {}}}))
+              :s7 {:after {2000 [{:target :s6
+                                  :guard guard-fn}
+                                 {:target :s8}]}}
+              :s8 {}}}))
 
 (deftest test-expand-path
   (let [fsm (nested-machine)]
@@ -491,12 +497,26 @@
 
     ))
 
-(deftest test-delayed-transition-unit
-  (let [{:keys [fsm init-state check-tx check-actions]} (prepare-nested-test)
-        {:keys [entry exit on] :as s6} (get-in fsm [:states :s6])]
+(deftest ^:focus test-delayed-transition-unit
+  (let [{:keys [fsm init-state check-tx check-actions]} (prepare-nested-test)]
 
-    (is (= entry [{:action :fsm/schedule-event
-                   :event-delay 1000
-                   :event [:fsm/delay [:s6] 1000]}]))
-    (is (= exit [{:action :fsm/unschedule-event
-                  :event [:fsm/delay [:s6] 1000]}]))))
+    (let [{:keys [entry exit on] :as s6} (get-in fsm [:states :s6])]
+      (is (= entry [{:action :fsm/schedule-event
+                     :event-delay 1000
+                     :event [:fsm/delay [:s6] 1000]}]))
+      (is (= exit [{:action :fsm/unschedule-event
+                    :event [:fsm/delay [:s6] 1000]}]))
+      (is (= on {[:fsm/delay [:s6] 1000] [{:target :s7}]})))
+
+    (let [{:keys [entry exit on] :as s7} (get-in fsm [:states :s7])]
+      (is (= entry [{:action :fsm/schedule-event
+                     :event-delay 2000
+                     :event [:fsm/delay [:s7] 2000]}]))
+
+      (is (= exit [{:action :fsm/unschedule-event
+                    :event [:fsm/delay [:s7] 2000]}]))
+
+      (is (= (get on [:fsm/delay [:s7] 2000])
+             [{:guard guard-fn
+               :target :s6}
+              {:target :s8}])))))

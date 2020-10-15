@@ -27,3 +27,4 @@ src/gen
 /.clj-kondo
 /docs/public
 _gen/
+/out/

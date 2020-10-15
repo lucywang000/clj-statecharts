@@ -61,6 +61,9 @@
    [:exit]
    [:on]]
 (defn derived-delay-info [delayed-transitions]
+  (doseq [dt delayed-transitions]
+    (assert (contains? dt :delay)
+      (str "no :delay key found in" dt)))
   (->> delayed-transitions
        (group-by :delay)
        ;; TODO: the transition's entry/exit shall be grouped by delay,

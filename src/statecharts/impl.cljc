@@ -62,13 +62,13 @@
 
 (def T_DelayExpression
   [:or
-   pos-int?
+   int?
    ;; when replaced as a
    [:fn ifn?]])
 
 (def T_DelayedEvent
   "Generated internal event for delayed transitions."
-  [:tuple keyword? T_Target [:or pos-int?
+  [:tuple keyword? T_Target [:or int?
                              ;; See delayed/generate-delayed-events
                              ;; for why we use string instead of
                              ;; delayed fn as the event key.
@@ -88,12 +88,18 @@
   ;; {1000 :s1 2000 :s2}
   ;; =>
   ;; [{delay: 1000 :target :s1} {:delay 2000 :target :s2}]
-  (mapv (fn [[ms target]]
-           (-> (canon-one-transition target)
-               (assoc :delay ms)))
-        m))
+  (->> m
+       (mapcat (fn [[ms target]]
+                 (->> target
+                      canon-transitions
+                      (map #(assoc % :delay ms)))))
+       (into [])))
 
 #_(decode-delayed-map {1000 :s1 2000 :s2})
+#_(decode-delayed-map {1000 [{:target :s1
+                              :cond :c1}
+                             {:target :s2}]
+                       2000 :s2})
 
 (defn decode-delayed-transitions [x]
   (if (map? x)
@@ -202,7 +208,7 @@
              {:action internal-action})))
   (cond
     (= action :fsm/schedule-event)
-    (let [event-delay (if (pos-int? event-delay)
+    (let [event-delay (if (int? event-delay)
                         event-delay
                         (event-delay state transition-event))]
       ;; #p [:execute-internal-action event]
