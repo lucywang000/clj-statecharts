@@ -11,6 +11,7 @@ Most features of statecharts are supported:
 * Transition actions & Entry/Exit actions
 * Guarded transitions
 * Delayed transitions
+* First-class Re-frame Integration
 
 ## Documentation
 
