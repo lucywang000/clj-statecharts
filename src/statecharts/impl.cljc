@@ -513,14 +513,15 @@
 (defn- resolve-transition
   [fsm
    {:as state :keys [_state]}
-   {:as event :keys [type]}]
+   {:as event :keys [type]}
+   input-event]
   (let [nodes (expand-path fsm _state)
 
         [transitions affected-nodes]
         (prog1 (find-handler nodes type)
           (check-or-throw (first <>) :event type :state _state))
 
-        tx (pick-transitions state event transitions)]
+        tx (pick-transitions state input-event transitions)]
     (if (nil? tx)
       ;; No matching transition, .e.g. guards not satisfied
       (assoc state
@@ -575,14 +576,15 @@
 
 (defn -transition
   [fsm state event {:keys [exec debug input-event] :or {exec true}}]
-  (let [new-state (resolve-transition fsm state event)]
+  (let [;; input-event is set to the original event when event is :fsm/always for
+        ;; eventless transitions
+        input-event (or input-event event)
+        new-state (resolve-transition fsm state event input-event)]
     (if exec
       (execute
        fsm
        new-state
-       ;; input-event is set to the original event when event is :fsm/always for
-       ;; eventless transitions
-       (or input-event event)
+       input-event
        {:debug debug})
       new-state)))
 

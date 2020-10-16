@@ -102,6 +102,8 @@
         entry5 (fn [_ event]
                  (reset! event-ref event))
 
+        guard-event-ref (atom nil)
+
         test-machine
         (impl/machine
          {:id :test
@@ -122,7 +124,9 @@
                 :always [{:guard (constantly false)
                           :actions a34
                           :target :s4}
-                         {:guard (constantly true)
+                         {:guard (fn [state event]
+                                   (reset! guard-event-ref event)
+                                   true)
                           :actions a35
                           :target :s5}]
                 :on {:e31 :s1}}
@@ -158,7 +162,8 @@
                :k1 :v1
                :k2 :v2})
       (is (= (:k1 @event-ref) :v1))
-      (is (= (:k2 @event-ref) :v2)))))
+      (is (= (:k2 @event-ref) :v2))
+      (is (= (:k1 @guard-event-ref) :v1)))))
 
 (defn guard-fn [state _]
   (> (:y state) 1))
