@@ -40,7 +40,11 @@ And use the `fsm/initialize` and `fsm/transition` functions.
 Returns the initial state of the machine. It also executes all the entry actions of
 the initial states, if any.
 
-If you do not want these actions to be executed, use `(fsm/initialize machine {:exec false})` instead.
+If you do not want these actions to be executed, use `(fsm/initialize machine
+{:exec false})` instead. The action functions would be collected in the `_actions`
+key of the new state map. For example, the test code of clj-statecharts uses this
+feature to make assertions to ensure correct actions are collected during
+transitions.
 
 #### (fsm/transition machine state event)
 

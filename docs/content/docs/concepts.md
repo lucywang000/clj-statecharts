@@ -38,7 +38,7 @@ The current state is expressed as a map like this:
 ```
 
 - All keys that starts with an underscore (e.g. `_state`) is considered internal to
-  clj-statecharts. Application code could read them, but should modify them.
+  clj-statecharts. Application code could read them, but should not modify them.
 - All others keys are application-specific data, collectively called the
   "[context](https://en.wikipedia.org/wiki/UML_state_machine#Extended_states)" of the
   state machine.
