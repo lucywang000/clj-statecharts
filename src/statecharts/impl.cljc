@@ -161,8 +161,7 @@
       [:initialize-event {:optional true} keyword?]]]]])
 
 (def T_Machine
-  [:map {:closed true
-         :decode/fsm {:leave (comp
+  [:map {:decode/fsm {:leave (comp
                               replace-delayed-place-holder
                               insert-delayed-transitions)}}
    T_Integrations
