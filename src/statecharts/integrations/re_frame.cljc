@@ -89,7 +89,8 @@
          {:keys [path initialize-event transition-event epoch?]}
          (get-in machine [:integrations :re-frame])
 
-         path (some-> path u/ensure-vector)]
+         path
+         (some-> path u/ensure-vector)]
 
      (when initialize-event
        (rf/reg-event-db

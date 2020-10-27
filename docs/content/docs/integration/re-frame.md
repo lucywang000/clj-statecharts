@@ -135,6 +135,17 @@ you update the app-db data (for instance modify the `:friends` key in the above
 example), it would not affect the state machine and would be overwritten by the
 next state machine update.
 
+## Immutable or Service?
+
+Integrate with the immutable API when:
+- The state machine states changes are mostly driven by UI/re-frame events (e.g.
+  button clicks)
+- You need to modify the state directly in other re-frame events
+
+Integrate with the service API when:
+- The state changes are mostly driven by non UI/re-frame events (e.g. websocket
+  states management)
+
 ## Further Reading
 
 * [Re-frame EP 003 - Finite State Machines](https://github.com/day8/re-frame/blob/v1.1.0/docs/EPs/005-StateMachines.md)

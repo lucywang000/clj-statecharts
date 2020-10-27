@@ -43,7 +43,7 @@
   ([fsm]
    (service fsm nil))
   ([fsm opts]
-   (let [{:keys [clock]}  (merge (default-opts) opts)]
+   (let [{:keys [clock]} (merge (default-opts) opts)]
      (Service. fsm
                ;; state
                (atom nil)
