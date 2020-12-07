@@ -244,7 +244,7 @@
                  new-state)
                (let [retval (action new-state event)]
                  (if (instance? ContextAssignment retval)
-                   (merge new-state (.-v retval))
+                   (.-v retval)
                    new-state))))
            (cond-> state
              (not debug)
