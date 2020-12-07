@@ -113,9 +113,10 @@ Quoting [XState doc](https://xstate.js.org/docs/guides/transitions.html#eventles
 > An eventless transition is a transition that is always taken when the machine is
 in the state where it is defined, and when its guards evaluates to true. They are
 always checked when the state is first entered, before handling any other events.
-Eventless transitions are defined on the :always key of the state node:
 
-Given the next state machine:
+Eventless transitions are defined on the `:always` key of the state node:
+
+Given the following state machine:
 
 ```clojure
 {:states {:s1 {:entry entry1
@@ -136,7 +137,7 @@ Given the next state machine:
 ```
 
 Assume current state is `:s1`, and event `:e12` happens.
-- The target state is `:s2`. Because :s2 has eventless transitions defined, it
+- The target state is `:s2`. Because `:s2` has eventless transitions defined, it
   would immediately evaluates the guard function `guard23`.
 - If `guard23` returns a truthy value, the machine would transition to state `:s3`.
   In this case these actions would be executed one by one:
