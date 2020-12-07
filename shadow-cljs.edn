@@ -2,8 +2,8 @@
  ["src"
   "test"]
 
- :dependencies [[metosin/malli "0.2.0"]
-                [re-frame "1.0.0"
+ :dependencies [[metosin/malli "0.2.1"]
+                [re-frame "1.1.2"
                  :exclusions [[cljsjs/react]
                               [cljsjs/react-dom]
                               [cljsjs/create-react-class]]]
