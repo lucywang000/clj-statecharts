@@ -38,11 +38,12 @@ Some examples:
 ```
 
 (1) We want to represent state `:s2` in the context of `:s1`, so we
-can simply write `:s2`.
+can simply write `:s2`. We could of course use the absolute syntax
+`[:> :s2]`.
 
-(2) We want to represent state `[:s1 :s1.1]` in the context of `:s1`,
-which means we can use either the relative syntax `[:. :s1.1]` or the
-absolute syntax `[:> :s1 :s1.1]`
+(2) `:s1.1` is a child state of `:s1`, and we want to represent it in the context
+of `:s1`, which means we can use either the relative syntax `[:. :s1.1]` or the
+absolute syntax `[:> :s1 :s1.1]`.
 
 (3) We want to represent the state `:s2` in the context of `:s1.1`,
 which means we had to use the absolute syntax here.
