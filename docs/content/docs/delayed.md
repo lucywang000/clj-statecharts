@@ -50,7 +50,7 @@ the reconnection delay could be calculated as an exponential backoff.
 
 ## Notes
 
-* Delayed transitions currently only works in the CLJS. CLJ support is going to be added soon.*
+* Delayed transitions currently only works in the CLJS. CLJ support is going to be added soon.
 
 * When using the [Immutable API]({{< relref "/docs/get-started#the-immutable-api"
 >}}), the machine spec must have a `:scheduler` key that satisfies the
