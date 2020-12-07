@@ -110,8 +110,8 @@ executed.
 
 Quoting [XState doc](https://xstate.js.org/docs/guides/transitions.html#eventless-transitions):
 
-An eventless transition is a transition that is always taken when the machine is in
-the state where it is defined, and when its guards evaluates to true. They are
+> An eventless transition is a transition that is always taken when the machine is
+in the state where it is defined, and when its guards evaluates to true. They are
 always checked when the state is first entered, before handling any other events.
 Eventless transitions are defined on the :always key of the state node:
 
