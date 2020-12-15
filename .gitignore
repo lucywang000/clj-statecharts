@@ -28,3 +28,4 @@ src/gen
 /docs/public
 _gen/
 /out/
+.cpcache
