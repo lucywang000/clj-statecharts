@@ -83,6 +83,22 @@ The `event` arg of update-counter would be `{:type :some-event}`. Extra keys cou
 And the `event` argument passed to the `update-counter` would have these `:k1`
 `:k2` keys etc.
 
+## The Special Variable `_prev-state` in Action Functions
+
+During action execution time, `_state` already points to the new
+state after the transition.
+
+The action functions could use the value under the `_prev-state` key of the context
+to access the previous state before the transition (e.g. for debugging, or
+archiving some information for later analysis).
+
+Please note:
+- Unlike `_state`, the `_prev-state` variable only exists during the transition and
+  would not be available after that.
+- If the transition is called with `{:exec false}`, the actions would be returned
+  to the caller instead of being executed. In that case it would also have no
+  access to `_prev-state`.
+
 ## A Full Example
 
 {{< loadcode "samples/src/statecharts-samples/trigger_actions.clj" >}}

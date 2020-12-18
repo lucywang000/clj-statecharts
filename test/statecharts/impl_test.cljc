@@ -606,3 +606,23 @@
            :s3 {}}})]
     (is (= (:_state (impl/transition test-machine {:_state :s1} :e12))
            :s3))))
+
+(deftest test-prev-state
+  (let [test-machine
+        (impl/machine
+         {:id :test
+          :initial :s1
+          :states
+          {:s1 {:on {:e12 {:target :s2
+                           :actions (assign
+                                     (fn [state _]
+                                       (assoc state :a1 (:_prev-state state))))}}}
+           :s2 {:always {:target :s3
+                         :actions (assign
+                                   (fn [state _]
+                                     (assoc state :a2 (:_prev-state state))))}}
+           :s3 {}}})]
+    (is (= (impl/transition test-machine {:_state :s1} :e12)
+           {:_state :s3
+            :a1 :s1
+            :a2 :s2}))))

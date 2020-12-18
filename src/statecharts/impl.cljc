@@ -571,6 +571,7 @@
                :_nodes new-nodes
                :_changed true
                :_state new-value
+               :_prev-state _state
                :_actions actions)))))
 
 (defn -transition
@@ -632,7 +633,7 @@
                (recur (inc i) state actions)
                [state actions])))]
      ;; get rid of the internal fields
-     (cond-> (dissoc new-state :_changed :_nodes)
+     (cond-> (dissoc new-state :_changed :_nodes :_prev-state)
        (or (not exec) debug)
        (assoc :_actions actions)))))
 
