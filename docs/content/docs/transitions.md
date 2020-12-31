@@ -31,9 +31,10 @@ Some syntax sugars:
                 :event2 :s3}}}}                            ;; (2)
 ```
 
-(1) The actions could be a vector of multiple action functions to execute
+(1) The actions could be a vector of multiple action functions to execute.
 
 (2) If there is no actions, the transition could be simplified to be a single
+keyword.
 
 Please note that event names could be any keywords, with one exception: **keywords
 namespace "fsm" is considered reserved for clj-statecharts's internal use**, so do
