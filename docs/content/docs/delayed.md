@@ -5,7 +5,8 @@ title: "Delayed Transitions"
 
 ## Basic Delayed Transitions
 
-To specify a transition that shall happen automatically after some time, sue the `:after` keyword:
+To specify a transition that shall happen automatically after some time, use the
+`:after` keyword:
 
 ```clojure
 {:states
