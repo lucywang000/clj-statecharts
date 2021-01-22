@@ -127,8 +127,7 @@
   (let [always (:always node)]
     (if-not always
       node
-      (let [{:keys [on]} node]
-        (update node :on assoc :fsm/always always)))))
+      (update node :on assoc :fsm/always always))))
 
 (def T_States
   [:schema
@@ -512,7 +511,7 @@
 (defn- resolve-transition
   [fsm
    {:as state :keys [_state]}
-   {:as event :keys [type]}
+   {:as _event :keys [type]}
    input-event]
   (let [nodes (expand-path fsm _state)
 
