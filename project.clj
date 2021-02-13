@@ -39,7 +39,7 @@
                    :injections [(require 'hashp.core)
                                 (require 'debux.core)]
 
-                   :source-paths ["dev/src" "local/src" "docs/samples/src"]
+                   :source-paths ["dev/src" "local/src"]
                    :dependencies [[philoskim/debux "0.7.8"]
                                   [org.clojure/clojurescript "1.10.773"]
                                   [org.clojure/test.check "1.1.0"]
