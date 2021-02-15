@@ -25,7 +25,7 @@ Please visit https://lucywang000.github.io/clj-statecharts/ for the documentatio
 
 ## License
 
-Copyright © 2020 Lucy Wang
+Copyright © 2020-2021 Lucy Wang
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
