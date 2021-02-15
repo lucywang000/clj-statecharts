@@ -69,7 +69,7 @@
       (assoc event :data data))))
 
 (defn log-discarded-event [{:keys [type]}]
-  (let [msg (str "event " type "ignored in new epoch")]
+  (let [msg (str "event " type " ignored in new epoch")]
     #?(:cljs
        (when ^boolean goog.DEBUG
          (js/console.log msg)))
