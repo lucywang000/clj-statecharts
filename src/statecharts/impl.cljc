@@ -681,8 +681,8 @@
                input-event
                true))))
        (reduce (fn [[new-state actions pending?] [k v]]
-                 (let [[_state.child child-actions _pending-eventless-tx?] v]
-                   [(assoc new-state k _state.child)
+                 (let [[_state-child child-actions _pending-eventless-tx?] v]
+                   [(assoc new-state k _state-child)
                     (into actions child-actions)
                     (or pending? _pending-eventless-tx?)]))
          ;; _state, _actions, _pending-eventless-tx?

@@ -51,14 +51,14 @@ that appealing, because:
 
 ## What is Parallel States
 
-**Parallel states** (a.k.a **concurrent states**) is a mechanism in
-statecharts that could be used to use a single statecharts to model different
-parts of an application that doesn't depend on each other. Conceptually:
+**Parallel states** (a.k.a **concurrent states**) is a mechanism in statecharts
+that could be used to use a single statecharts to model different parts of an
+application that doesn't depend on each other. Conceptually:
 
 - when an event comes, each child of a parallel state receives this event at the
-  same time. They could either handle it or ignore it, since some events only makes
-  sense to one part of the screen, e.g. "property-loaded" should be handled by the
-  props part, but should be ignored by the other parts.
+  same time. They could either handle it or ignore it, since some events only
+  makes sense to one part of the screen, e.g. "property-loaded" should be
+  handled by the props part, but should be ignored by the other parts.
 - The current state of the statecharts is a combination of all parallel
   children.
 
@@ -137,6 +137,15 @@ hierarchical node, but one of its children `:p2b2` is a parallel node.
 
 We can build arbitrary complex statecharts this way, but it's highly discouraged
 because it makes the statecharts harder and harder to reason about.
+
+## State Representation for Parallel Node
+
+- If the fsm root node is a parallel node, then the whole state is represented
+  as a map, e.g. `{:r1 :r1-state :r2 :r2-state}`
+- In a typical hierarchical node, the current state is represented as
+  `[:s1 :s1.1]`. However, if `:s1.1` is a parallel node and has two regions
+  `:r1` and `:r2`, then it would be represented as
+  `[:s1 {:s1.1 {:r1 :r1-state :r2 :r2-state}}]`.
 
 ## Advantages and Disadvantages of Parallel States
 
