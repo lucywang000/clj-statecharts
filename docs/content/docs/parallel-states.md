@@ -187,7 +187,7 @@ nano-second HFT system.
 
 Currently these use cases are not supported:
 
-- Transitions defined on the root of a parallel node are ignored
+- Transitions defined on the parallel node itself are ignored
 - In a statecharts where a hierarchical node has a parallel node as its child,
   and the current active child is this parallel node:
   - It's not possible to transition out of the parallel node (but could
