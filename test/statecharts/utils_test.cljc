@@ -6,6 +6,15 @@
   (is (= (u/map-kv (fn [k v] [k (inc v)]) {:a 1 :b 2})
          {:a 2 :b 3})))
 
+(deftest test-map-vals
+  (is (= (u/map-vals inc {:a 1 :b 2})
+         {:a 2 :b 3})))
+
+(deftest test-map-kv-vals
+  (is (= (u/map-kv-vals (fn [k v]
+                          (inc v)) {:a 1 :b 2})
+         {:a 2 :b 3})))
+
 (deftest test-remove-vals
   (is (= (u/remove-vals odd? {:a 1 :b 2})
          {:b 2})))

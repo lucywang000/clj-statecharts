@@ -22,6 +22,17 @@
 (defn update-connect-attempts [state event]
   (update state :connect-attempts (fnil inc 0)))
 
+(defn assign-inc-fn [k]
+  (assign (fn [context & _]
+            (update context k (fnil inc 0)))))
+
+(def inc-a (assign-inc-fn :a))
+(def inc-b (assign-inc-fn :b))
+(def inc-c (assign-inc-fn :c))
+(def inc-d (assign-inc-fn :d))
+(def inc-e (assign-inc-fn :e))
+
+
 (defn test-machine []
   (impl/machine
    {:id      :conn
@@ -261,9 +272,9 @@
                    :always {:target :s8
                             :actions :a98}}}}))
 
-(deftest test-expand-path
+(deftest test-_state->path
   (let [fsm (nested-machine)]
-    (is (= (impl/expand-path fsm :s2)
+    (is (= (impl/_state->path fsm :s2)
            [(-> fsm
                 impl/extract-path-element)
             (-> fsm
@@ -272,8 +283,8 @@
                 (assoc :id :s2)
                 impl/extract-path-element)]))
 
-    (is (= (impl/expand-path fsm [:s1])
-           (impl/expand-path fsm [:s1 :s1.1])
+    (is (= (impl/_state->path fsm [:s1])
+           (impl/_state->path fsm [:s1 :s1.1])
            [(-> fsm
                 (dissoc :states)
                 (impl/extract-path-element))
@@ -294,7 +305,7 @@
                 (assoc :id :s1.1.1)
                 impl/extract-path-element)]))
 
-    (is (= (impl/expand-path fsm [:s1 :s1.2])
+    (is (= (impl/_state->path fsm [:s1 :s1.2])
            [(-> fsm
                 (dissoc :states)
                 (impl/extract-path-element))
@@ -626,3 +637,300 @@
            {:_state :s3
             :a1 :s1
             :a2 :s2}))))
+
+(defn parallel-machine
+  []
+  (impl/machine
+          {:id :test
+           :type :parallel
+           :context {:a 0
+                     :b 0}
+           :regions
+           {:p1 {:initial :p11
+                 :states {:p11 {:on {:e12 {:target :p12
+                                           :actions inc-a}}}
+                          :p12 {}}}
+            :p2 {:initial :p21
+                 :states {:p21 {:on {:e12 {:target :p22
+                                           :actions inc-b}}}
+                          :p22 {:always {:target :p23
+                                         :actions inc-b}}
+                          :p23 {}}}
+            ;; p3 is a nested parallel node
+            :p3 {:type :parallel
+                 :regions
+                 {:p3.a {:initial :p3.a1
+                         :states {:p3.a1 {:on {:e12 {:target :p3.a2
+                                                     :actions inc-c}}}
+                                  :p3.a2 {}}}
+                  :p3.b {:initial :p3.b1
+                         :states {:p3.b1 {:on {:e12 {:target :p3.b2
+                                                     :actions inc-d}}}
+                                  :p3.b2 {:always {:target :p3.b3
+                                                   :actions inc-d}}
+                                  :p3.b3 {}}}
+                  :p3.c {:initial :p3c1
+                         :states {:p3c1 {:on {:e331 :p3c2}}
+                                  ;; parallel nest level depth +1
+                                  :p3c2 {:type :parallel
+                                         :regions {:p3c2.a {:initial :p3c2.a1
+                                                          :states {:p3c2.a1 {}}}
+                                                  :p3c2.b {:initial :p3c2.b1
+                                                          :states {:p3c2.b1
+                                                                   {}}}}}}}}}}}))
+
+(defn alt-parallel-machine
+  []
+  (impl/machine
+          {:id :test
+           :context {:a 0
+                     :b 0
+                     :c 0
+                     :d 0
+                     :e 0}
+           :initial :p3
+           :states
+           {:p1 {:initial :p11
+                 :states {:p11 {:on {:e12 {:target :p12
+                                           :actions inc-a}}}
+                          :p12 {}}}
+            :p2 {:initial :p21
+                 :states {:p21 {:on {:e12 {:target :p22
+                                           :actions inc-b}}}
+                          :p22 {:always {:target :p23
+                                         :actions inc-b}}
+                          :p23 {}}}
+            ;; p3 is a nested parallel node
+            :p3 {:type :parallel
+                 :regions
+                 {:p3.a {:initial :p3.a1
+                         :states {:p3.a1 {:on {:e12 {:target :p3.a2
+                                                     :actions inc-c}}}
+                                  :p3.a2 {}}}
+                  :p3.b {:initial :p3.b1
+                         :states {:p3.b1 {:on {:e12 {:target :p3.b2
+                                                     :actions inc-d}}}
+                                  :p3.b2 {:always {:target :p3.b3
+                                                   :actions inc-d}}
+                                  :p3.b3 {}}}
+                  :p3.c {:initial :p3c2
+                         :states {:p3c1 {:on {:e331 :p3c2}}
+                                  ;; parallel nest level depth +1
+                                  :p3c2 {:type :parallel
+                                         :regions {:p3c2.a {:initial :p3c2.a1
+                                                          :states {:p3c2.a1 {}}}
+                                                  :p3c2.b {:initial :p3c2.b1
+                                                          :states {:p3c2.b1
+                                                                   {}}}}}}}}}}}))
+
+(deftest test-parallel-_state->path
+  (let [fsm (alt-parallel-machine)
+        format-node (fn [path]
+                      (-> fsm
+                          (get-in path)
+                          (assoc :id (last path))
+                          impl/extract-path-element))]
+    (is
+      (= (impl/_state->path fsm :p3)
+         [(-> fsm
+              impl/extract-path-element)
+          (format-node [:states :p3])
+          {:type :parallel
+           :regions
+           {:p3.a [(format-node [:states :p3 :regions :p3.a])
+                   (format-node [:states :p3 :regions :p3.a :states :p3.a1])]
+
+            :p3.b [(format-node [:states :p3 :p3.b])
+                   (format-node [:states :p3 :regions :p3.b :states :p3.b1])]
+            :p3.c [(format-node [:states :p3 :p3.c])
+                   (format-node [:states :p3 :regions :p3.c :states :p3c2])
+                   {:type :parallel
+                    :regions
+                    {:p3c2.a
+                     [(format-node [:states :p3 :regions :p3.c :states :p3c2 :states
+                                    :p3c2.a])
+                      (format-node [:states :p3 :regions :p3.c :states :p3c2 :states
+                                    :p3c2.a :states :p3c2.a1])]
+
+                     :p3c2.b
+                     [(format-node [:states :p3 :regions :p3.c :states :p3c2 :states
+                                    :p3c2.b])
+                      (format-node [:states :p3 :regions :p3.c :states :p3c2 :states
+                                    :p3c2.b :states :p3c2.b1])]}}
+                  ]}}]))))
+
+(deftest test-path->_state
+  (are [path _ _state]
+       (= (impl/path->_state path)
+          _state)
+
+       [{} {:id :s1}]
+       :=>
+       :s1
+
+       [{} {:id :s1} {:id :s1.1}]
+       :=>
+       [:s1 :s1.1]
+
+       [{} {:id :s1} {:id :s1.1}
+        {:type :parallel
+         :regions {:p1 [{:id :p1}
+                       {:id :p1.1}]
+                  :p2 [{:id :p2}
+                       {:id :p2.2}
+                       {:id :p2.21}]}}]
+       :=>
+       [:s1
+        {:s1.1 {:p1 :p1.1
+                :p2 [:p2.2 :p2.21]}}]
+
+  ))
+
+
+(deftest test-parallel-states
+  (let [test-machine (parallel-machine)
+
+        state (impl/initialize test-machine)
+
+        _ (is (= (:_state state)
+                 {:p1 :p11
+                  :p2 :p21
+                  :p3 {:p3.a :p3.a1
+                       :p3.b :p3.b1
+                       :p3.c :p3c1}}))
+
+        new-state (impl/transition test-machine state :e12)
+        new-state2 (impl/transition test-machine new-state :e331)]
+    (is (= new-state
+           {:_state {:p1 :p12
+                     :p2 :p23
+                     :p3 {:p3.a :p3.a2
+                          :p3.b :p3.b3
+                          :p3.c :p3c1}}
+            :a 1
+            :b 2
+            :c 1
+            :d 2}))
+    (is (= new-state2
+           {:_state {:p1 :p12
+                     :p2 :p23
+                     :p3 {:p3.a :p3.a2
+                          :p3.b :p3.b3
+                          :p3.c {:p3c2 {:p3c2.a :p3c2.a1
+                                        :p3c2.b :p3c2.b1}}}}
+            :a 1
+            :b 2
+            :c 1
+            :d 2}))))
+
+(deftest test-alt-parallel-states
+  (let [test-machine (alt-parallel-machine)
+
+        state (impl/initialize test-machine)
+
+        _ (is (= (:_state state)
+                 {:p3 {:p3.a :p3.a1
+                       :p3.b :p3.b1
+                       :p3.c {:p3c2 {:p3c2.a :p3c2.a1
+                                     :p3c2.b :p3c2.b1}}}}))
+        new-state (impl/transition test-machine state :e12)
+        new-state2 (impl/transition test-machine state :e331)]
+    (is (= new-state
+           {:_state {:p3 {:p3.a :p3.a2
+                          :p3.b :p3.b3
+                          :p3.c {:p3c2 {:p3c2.a :p3c2.a1
+                                        :p3c2.b :p3c2.b1}}}}
+            :a 0
+            :b 0
+            :c 1
+            :d 2
+            :e 0}))
+    (is (= new-state2
+           {:_state {:p3 {:p3.a :p3.a1
+                          :p3.b :p3.b1
+                          :p3.c {:p3c2 {:p3c2.a :p3c2.a1
+                                        :p3c2.b :p3c2.b1}}}}
+            :a 0
+            :b 0
+            :c 0
+            :d 0
+            :e 0}))))
+
+(deftest test-simple-parallel-states
+  (let [test-machine
+        (impl/machine
+          {:id :simple-parallel
+           :type :parallel
+           :regions
+           {:pa {:initial :pa1
+                 :states {:pa1 {:on {:e12 :pa2}}
+                          :pa2 {}}}
+            :pb {:initial :pb1
+                 :states {:pb1 {:on {:e12 :pb2}}
+                          :pb2 {}}}}})
+
+        state (impl/initialize test-machine)
+
+        _ (is (= (:_state state)
+                 {:pa :pa1
+                  :pb :pb1}))
+
+        new-state (impl/transition test-machine state :e12)]
+    (is (= (:_state new-state)
+           {:pa :pa2
+            :pb :pb2}))))
+
+(def non-root-parallel-states
+  (impl/machine
+    {:id :simple-parallel
+     :initial :s1
+     :states
+     {:s1 {:initial :s1.1
+           :on {:e0 :s2}
+           :states
+           {:s1.1 {:type :parallel
+                   :regions {:pa {:initial :pa1
+                                 :states {:pa1 {:on {:e12 :pa2
+                                                     :e13 :pa3
+                                                     :e2 [:>> :s2]
+                                                     }}
+                                          :pa2 {}
+                                          :pa3 {:always {:target :pa4}}
+                                          :pa4 {}}}
+                            :pb {:initial :pb1
+                                 :states {:pb1 {:on {:e12 :pb2}}
+                                          :pb2 {}}}}}
+            :s1.2 {}}}
+      :s2 {:on {:e21 :s1}}}}))
+
+(deftest test-non-root-parallel-states
+  (let [test-machine non-root-parallel-states
+        state (impl/initialize test-machine)
+        _ (is (= (:_state state)
+                 [:s1 {:s1.1 {:pa :pa1
+                              :pb :pb1}}]))
+
+        new-state (impl/transition test-machine state :e12)
+        new-state2 (impl/transition test-machine state :e13)
+        ;; new-state3 (impl/transition test-machine state :e2)
+        new-state4 (impl/transition test-machine state :e0)]
+    (is (= (:_state new-state)
+           [:s1 {:s1.1 {:pa :pa2
+                        :pb :pb2}}]))
+    (is (= (:_state new-state2)
+           [:s1 {:s1.1 {:pa :pa4
+                        :pb :pb1}}]))
+    #_(is (= (:_state new-state3) :s2))
+    #_(is (= (:_state new-state4) :s2))))
+
+(deftest test-non-root-parallel-states-tx-into
+  (let [test-machine non-root-parallel-states
+        state (impl/initialize (assoc test-machine :initial :s2))
+        state1 (impl/transition test-machine state :e21)]
+    (is (= (:_state state) :s2))
+    (is (= (:_state state1) [:s1 {:s1.1 {:pa :pa1
+                              :pb :pb1}}]))))
+
+(deftest test-get-last-para-child
+  (is (= (impl/get-last-para-child non-root-parallel-states [:s1 {:s1.1 {:pa :pa1 :pb :pb1}}])
+         [:s1.1 (get-in non-root-parallel-states [:states :s1 :states :s1.1])])))

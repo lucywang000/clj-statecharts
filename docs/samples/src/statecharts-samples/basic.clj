@@ -6,21 +6,21 @@
 ;; define the machine
 (def machine
   (fsm/machine
-   {:id      :lights
-    :initial :red
-    :context nil
-    :states
-    {:green  {:on
-              {:timer {:target  :yellow
-                       :actions (fn [& _]
-                                  (println "transitioned to :yellow!"))
+    {:id      :lights
+     :initial :red
+     :context nil
+     :states
+     {:green  {:on
+               {:timer {:target  :yellow
+                        :actions (fn [& _]
+                                   (println "transitioned to :yellow!"))
                        }}}
-     :yellow {:on
-              {:timer :red}}
-     :red    {:on
-              {:timer :green}}}
+      :yellow {:on
+               {:timer :red}}
+      :red    {:on
+               {:timer :green}}}
 
-    :on {:power-outage :red}
+     :on      {:power-outage :red}
     }))
 
 ;; define the service

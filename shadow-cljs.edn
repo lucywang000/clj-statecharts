@@ -2,7 +2,7 @@
  ["src"
   "test"]
 
- :dependencies [[metosin/malli "0.2.1"]
+ :dependencies [[metosin/malli "0.3.0"]
                 [re-frame "1.1.2"
                  :exclusions [[cljsjs/react]
                               [cljsjs/react-dom]

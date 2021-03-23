@@ -1,8 +1,14 @@
 (ns statecharts.utils)
 
 (defn ensure-vector [x]
-  (if (vector? x)
+  (cond
+    (vector? x)
     x
+
+    (nil? x)
+    []
+
+    :else
     [x]))
 
 (defn ensure-event-map [x]
@@ -16,6 +22,18 @@
               (f k v)))
        (into (empty m))))
 
+(defn map-vals [f m]
+  (->> m
+       (map (fn [[k v]]
+              [k (f v)]))
+       (into (empty m))))
+
+(defn map-kv-vals [f m]
+  (->> m
+       (map (fn [[k v]]
+              [k (f k v)]))
+       (into (empty m))))
+
 (defn remove-vals [pred m]
   (->> m
        (remove (fn [[_ v]]
@@ -26,3 +44,13 @@
   (->> coll
        (filter pred)
        first))
+
+(defn with-index [coll]
+  (map vector coll (range)))
+
+(defn devectorize
+  "Return the first element of x if x is a one-element vector."
+  [x]
+  (if (= 1 (count x))
+    (first x)
+    x))

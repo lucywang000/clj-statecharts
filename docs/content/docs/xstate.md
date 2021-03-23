@@ -16,7 +16,6 @@ title: "Difference from XState"
 
 ## Unsupported XState Features
 
-* parallel states
 * invoking another machine/promise/actor
 
 ## Different structure for the state map

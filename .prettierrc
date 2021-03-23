@@ -1,0 +1,25 @@
+{
+    "singleQuote": true,
+    "tabWidth": 2,
+    "useTabs": false,
+    "printWidth": 80,
+    "endOfLine": "auto",
+    "proseWrap": "always",
+    "overrides": [
+        {
+            "files": ["*.yml", "*.yaml"],
+            "options": {
+                "tabWidth": 2
+            }
+        },
+        {
+            "files": ["*.js", "*.jsx"],
+            "options": {
+                "arrowParens": "avoid",
+                "semi": false,
+                "singleQuote": true,
+                "bracketSpacing": false
+            }
+        }
+    ]
+}

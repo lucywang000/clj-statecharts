@@ -1,6 +1,7 @@
 (ns statecharts.impl
   (:require [malli.core :as ma]
             [malli.transform :as mt]
+            [malli.error]
             [statecharts.delayed
              :as fsm.d
              :refer [insert-delayed-transitions
@@ -129,6 +130,9 @@
       node
       (update node :on assoc :fsm/always always))))
 
+(def T_Type
+  [:type {:optional true} [:enum :parallel]])
+
 (def T_States
   [:schema
    {:registry
@@ -142,7 +146,11 @@
                       T_EventlessTransitions
                       T_Transitions
                       T_Initial
+                      ;; TODO: dispatch on type
+                      T_Type
                       [:states {:optional true}
+                       [:map-of keyword? [:ref ::state]]]
+                      [:regions {:optional true}
                        [:map-of keyword? [:ref ::state]]]]}}
    [:map-of keyword? [:ref ::state]]])
 
@@ -172,7 +180,10 @@
    T_Entry
    T_Exit
    T_Initial
-   [:states T_States]])
+   ;; TODO: dispatch on type
+   T_Type
+   [:states {:optional true} T_States]
+   [:regions {:optional true} T_States]])
 
 (declare validate-targets)
 
@@ -185,11 +196,15 @@
                      {:name :fsm}))]
     (when-not (ma/validate T_Machine conformed)
       ;; TODO: ensure the initial target exists
-      (let [reason (ma/explain T_Machine conformed)
-            msg "Invalid fsm machine spec"]
+      (let [reason (malli.error/humanize (ma/explain T_Machine conformed))
+            machine-id (:id conformed)
+            msg (cond-> "Invalid fsm machine spec:"
+                  machine-id
+                  (str " machine-id=" machine-id))]
         #?(:cljs
-           (when ^boolean goog.DEBUG
-             (js/console.warn msg reason)))
+           (js/console.warn msg (-> reason
+                                    (clj->js)
+                                    (js/JSON.stringify))))
         (throw (ex-info msg reason))))
     (validate-targets conformed)
     conformed))
@@ -270,53 +285,129 @@
 (defn nested-state? [node]
   (:initial node))
 
-(defn resolve-nested-state [node]
-  (loop [{:keys [initial states]} node
-         ret []]
-    (if-not initial
-      ret
-      (let [;; ignore the :. of initial nodes
-            initial (if (sequential? initial)
-                       (last initial)
-                       initial)
-            initial-node (get states initial)]
-        (recur initial-node
-               (conj ret (-> initial-node
-                             (assoc :id initial)
-                             extract-path-element)))))))
+(defn- parallel? [node]
+  (some-> (:type node)
+          (= :parallel)))
 
-(defn expand-path
-  "Return a list of successive states which has parent->child
-  relationship, by walking the paths from the root of the fsm. If the
-  leaf is a hierarchical state, resolve its initial child."
-  [fsm path]
+(defn- hierarchical? [node]
+  (contains? node :initial))
+
+(defn- get-initial-node [{:keys [initial states] :as _node}]
+  (let [ ;; ignore the :. of initial nodes
+        initial (if (sequential? initial)
+                  (last initial)
+                  initial)]
+    (assoc (get states initial) :id initial)))
+
+(defn path->_state
+  "Calculate the _state value based on the node paths.
+
+  In our internal code, we need to represent the current state as a series of
+  nodes, but when presenting the current state to the user we need to extract the
+  simplest form."
+  [xs]
+  (let [indexed-xs (u/with-index (rest xs))
+        ret (->> indexed-xs
+                 (reduce
+                   (fn [accu [node i]]
+                     (if (parallel? node)
+                       (let [para-state (u/map-vals path->_state
+                                                    (:regions node))]
+                         (if (zero? i)
+                           ;; If the root is a para node: {:p1 :s1 :p2 :s2}
+                           [para-state]
+                           ;; If the non-root is a para node: {:p1 {:p2 :s2 :p3
+                           ;; :s3}}
+                           (update accu
+                                   (dec i)
+                                   (fn [id]
+                                     {id para-state}))))
+                       (conj accu (:id node))))
+                   []))]
+    (u/devectorize ret)))
+
+(defn _state->path
+  "Given a `_state` value, return the path of nodes (which has parent->child relationship) to that value.
+
+  For instance: [root l1 l2 l3]
+
+  If the leaf is a hierarchical state, resolve its initial child.
+
+  For parallel state nodes, it would include the node itself, followed by a map of
+  its child states. For instance:
+
+    [:root
+     :p3
+     {:type :parallel
+      :regions {
+        :partA [:Al2 :Al3]
+        :partB [:Bl2 :Bl3]}
+      }]
+
+  Or even deeply nested ones:
+
+    [:root :p3
+     {:type :parallel
+      :regions
+      {:partA
+       [:Al1
+        {:type :parallel
+         :regions {:Al3X {:type :parallel
+                         :regions {:x1 [:l1 :l2]
+                                  :x2 [:l1 :l2]}}
+                  :Al3Y {:type :parallel
+                         :regions {:y1 [:l1 :l2]
+                                  :y2 [:l2 :l2]}}}}]
+
+       :partB [:Bl1 :Bl2]}}]
+
+  Though in real world projects we should never use such a complex statecharts."
+  [node path]
   (let [path (u/ensure-vector path)
-        accu (atom [])
-        append #(swap! accu conj %)]
-    (append (extract-path-element fsm))
-    (loop [path path
-           node fsm]
-      (if-not (seq path)
-        (swap! accu concat (resolve-nested-state node))
+        path (if (= (first path) :>>)
+               (subvec path 1)
+               path)
+        accu (volatile! [])
+        append #(vswap! accu conj %)
+        append-all #(vswap! accu into %)]
+    (append (extract-path-element node))
+    (loop [node node
+           path path]
+      (cond
+        (parallel? node)
+        (do
+          ;; All children of a parallel state node must always be involved
+          ;; together in event handling, so it should never be necessary to
+          ;; address a particual child of a parallel state node.
+          ;; #p path
+          (assert (not (seq path)) path)
+          (append
+            {:type :parallel
+             :regions (->> (:regions node)
+                          (u/map-kv-vals
+                            (fn [k region]
+                              (_state->path (assoc region :id k) nil))))}))
+
+        (not (seq path))
+        ;; No more path, but we need to resolve the :initial state of hierarchical
+        ;; nodes.
+        (when (hierarchical? node)
+          (let [initial-node (get-initial-node node)]
+            (append-all (_state->path initial-node []))))
+
+        :else
         (let [id (first path)
               child (some-> (get-in node [:states id])
                             (assoc :id id))]
           (when (nil? child)
-            (throw (ex-info "Invalid fsm path" {::type :invalid-path
-                                                :component id
-                                                :path path})))
+            ;; (js-debugger)
+            (throw (ex-info (str "Invalid fsm path for machine " (:id node))
+                            {::type :invalid-path
+                             :component id
+                             :path path})))
           (append (extract-path-element child))
-          (recur (next path) child))))
+          (recur child (next path)))))
     (into [] @accu)))
-
-(defn expanded-path->id
-  "For non-nested path, return its id, otherwise return a vector of
-  path."
-  [xs]
-  (let [non-root (drop 1 xs)]
-    (if (> (count non-root) 1)
-      (vec (map :id non-root))
-      (:id (first non-root)))))
 
 (defn check-or-throw [x k v & {:keys [] :as map}]
   (when (nil? x)
@@ -347,22 +438,27 @@
 
   - If the target is a vector and the first element is :>, it's an absolute path
 
-    (resolve-target :whatever [:> :s2]) => [:s2]
+    (f :whatever [:> :s2]) => [:s2]
+
+  - :>> is lile :>, but within a parallel region, :> resolves from the region root,
+    while :>> resolves from the fsm root.
+
+    (f :whatever [:>> :s2]) => [:s2]
 
   - If the target is a vector and the first element is not :>, it's an relative path
 
-    (resolve-target [:s1] [:s2]) => :s2
-    (resolve-target [:s1 :s1.1] [:s1.2]) => [:s1 :s1.2]
+    (f [:s1] [:s2]) => :s2
+    (f [:s1 :s1.1] [:s1.2]) => [:s1 :s1.2]
 
   - If the target is a keyword, it's the same as an one-element vector
 
-    (resolve-target [:s1] :s2) => :s2
-    (resolve-target [:s1 :s1.1] :s1.2) => [:s1 :s1.2]
+    (f [:s1] :s2) => :s2
+    (f [:s1 :s1.1] :s1.2) => [:s1 :s1.2]
 
   - If the target is a vector and the first element is :., it's a
     child state of current node:
 
-    (resolve-target [:s1] [:. :s1.1]) => [:s1 :s1.1]
+    (f [:s1] [:. :s1.1]) => [:s1 :s1.1]
 
   E.g. given current state [:s1 :s1.1] and a target of :s1.2, it
   should resolve to [:s1 :s1.2]"
@@ -441,30 +537,46 @@
     (and (<= n (count ys))
          (= xs (take n ys)))))
 
+(defn extract-entries [node]
+  (if (parallel? node)
+    (->> (:regions node)
+         (mapcat extract-entries))
+    (:entry node)))
+
+(defn node->initial
+  "Return a tuple of (initial _state, entry actions)"
+  [root initial]
+  (let [initial (resolve-target [] initial)
+        initial-nodes (_state->path root initial)
+        initial-entry (->> initial-nodes
+                           (mapcat extract-entries)
+                           vec)]
+    [;; the _state
+     (path->_state initial-nodes)
+     ;; the _actions
+     initial-entry]))
+
 ;; TODO: `initialize` is just a special case of `transition`, and the
 ;; code/sigature is much the same as `transition`. Consider refactor
 ;; it to call transition instead?
 (defn initialize
   ([fsm]
    (initialize fsm nil))
-  ([{:keys [initial] :as fsm}
+  ([{:keys [initial type]
+     :as fsm}
     {:keys [exec debug context]
-     :or   {exec    true
-            context nil}
-     :as   _opts}]
-   (let [initial       (resolve-target [] initial)
-         initial-nodes (expand-path fsm initial)
-         initial-entry (->> initial-nodes
-                            (mapcat :entry)
-                            vec)
-         context       (if (some? context)
-                         context
-                         (:context fsm))
+     :or {exec true
+          context nil}
+     :as _opts}]
+   (let [context (if (some? context)
+                   context
+                   (:context fsm))
          event {:type :fsm/init}
-         state         (assoc context
-                              :_state (expanded-path->id initial-nodes)
-                              ;; :_event event
-                              :_actions initial-entry)]
+         state
+         (let [[_state _actions] (node->initial fsm initial)]
+           (assoc context
+                  :_state _state
+                  :_actions _actions))]
      (if exec
        (execute fsm state event {:debug debug})
        state))))
@@ -506,170 +618,338 @@
      :exit (reverse (mapcat :exit affected))}))
 
 (defn has-eventless-transition? [nodes]
-  (some #(get-in % [:on :fsm/always]) nodes))
+  (some? (some #(get-in % [:on :fsm/always]) nodes)))
 
-(defn- resolve-transition
+(defn flatten-parallel-state [fsm state]
+  (cond
+    (vector? state)
+    (mapv flatten-parallel-state state)
+
+    ;; how to tell  is a root parallel node while  is
+    ;; child? We must
+    (map? state)
+    (if (parallel? fsm)
+      ;; {:pa :pa1 :pb :pb1} the root node is parallel
+      []
+      (do
+        ;; {:px {:pa :pa1 :pb :pb1}}
+        ;; a root hierarchical node with a parallel node as its active child
+        (assert (= (count state) 1) state)
+        (let [[para-id para-state] (first state)]
+          para-id
+          #_[para-id (u/map-vals flatten-parallel-state para-state)])))
+
+    :else
+    state))
+
+(defn- updatev-last
+  "Update the last element of a vector"
+  [v f & args]
+  (apply update v (dec (count v)) f args))
+
+(defn double-absolute? [path]
+  (and (vector? path)
+       (= (first path) :>>)))
+
+(defn get-last-para-child
+  [root statev]
+  (let [statev (updatev-last statev #(-> %
+                                         keys
+                                         first))
+        para-node (reduce (fn [cur-node k]
+                            (get-in cur-node [:states k]))
+                          root
+                          statev)
+        k (last statev)]
+    [k para-node]))
+
+(declare -do-tx-recursive)
+
+(defn- -do-tx-parallel
+  [node state event input-event]
+  ;; #p [event input-event state]
+  (->> (:regions node)
+       (u/map-kv-vals
+         (fn [k region]
+           (let [child-state
+                 (-> state
+                     (update :_state get k))]
+             (-do-tx-recursive
+               region
+               child-state
+               event
+               input-event
+               true))))
+       (reduce (fn [[new-state actions pending?] [k v]]
+                 (let [[_state.child child-actions _pending-eventless-tx?] v]
+                   [(assoc new-state k _state.child)
+                    (into actions child-actions)
+                    (or pending? _pending-eventless-tx?)]))
+         ;; _state, _actions, _pending-eventless-tx?
+         [{} [] false])))
+
+(defn- -do-tx-hierarchical
   [fsm
-   {:as state :keys [_state]}
-   {:as _event :keys [type]}
-   input-event]
-  (let [nodes (expand-path fsm _state)
+   {:as state
+    :keys [_state]}
+   {:as _event
+    :keys [type]}
+   input-event
+   ignore-unknown-event?]
+  (let [nodes (_state->path fsm _state)]
+    (let [[transitions affected-nodes]
+          (prog1 (find-handler nodes type)
+                 (when-not ignore-unknown-event?
+                   (check-or-throw (first <>)
+                                   :event type
+                                   :state _state
+                                   :machine-id (:id fsm))))
 
-        [transitions affected-nodes]
-        (prog1 (find-handler nodes type)
-          (check-or-throw (first <>) :event type :state _state))
+          tx (when transitions
+               ;; pass the original event to the guards
+               (pick-transitions state input-event transitions))]
+      (if (nil? tx)
+        ;; No matching transition, .e.g. guards not satisfied
+        [(path->_state nodes) [] false]
+        (let [{:keys [target actions]} tx
 
-        tx (pick-transitions state input-event transitions)]
-    (if (nil? tx)
-      ;; No matching transition, .e.g. guards not satisfied
-      (assoc state
-             :_state (expanded-path->id nodes)
-             :_changed false
-             :_actions [])
-      (let [{:keys [target actions]} tx
+              ;; target could be nil for a self-transition
+              target (some-> target
+                             u/ensure-vector)
 
-            ;; target could be nil for a self-transition
-            target (some-> target u/ensure-vector)
+              ;; Here the base of resolve-target may not be the current
+              ;; state node, but the one that does handle the event, e.g.
+              ;; could be a ancestor of the current node.
+              handler-path (->> affected-nodes
+                                (drop 1)
+                                (mapv :id))
 
-            ;; Here the base of resolve-target may not be the current
-            ;; state node, but the one that does handle the event, e.g.
-            ;; could be a ancestor of the current node.
-            handler-path (->> affected-nodes
-                              (drop 1)
-                              (mapv :id))
+              target-resolved (resolve-target handler-path target)
 
-            resolved-target (resolve-target handler-path target)
+              ;; If the tx is going out of the current parallel node, we need to
+              ;; notify the parent to handle it.
+              ;; _ (when (double-absolute? #p target-resolved))
 
-            new-nodes (prog1 (expand-path fsm resolved-target)
-                        (check-or-throw <> :target resolved-target))
+              new-nodes (prog1 (_state->path fsm target-resolved)
+                               (check-or-throw <>
+                                               :target target-resolved
+                                               :machine-id (:id fsm)))
 
-            new-value (expanded-path->id new-nodes)
+              new-value (path->_state new-nodes)
 
-            external-transition? (and (absolute-target? target)
-                                      (is-prefix? handler-path resolved-target))
+              external-transition? (and (absolute-target? target)
+                                        (is-prefix? handler-path
+                                                    target-resolved))
 
-            ;; _ #p [handler-path resolved-target external-transition?]
+              ;; _ #p [handler-path resolved-target external-transition?]
 
-            {:keys [entry exit]}
-            (cond
-              ;; target=nil => internal self-transition
-              (nil? target)
-              nil
+              {:keys [entry exit]}
+              (cond
+                ;; target=nil => internal self-transition
+                (nil? target)
+                nil
 
-              (= handler-path resolved-target)
-              ;; external self-transtion
-              (external-self-transition-actions handler-path new-nodes)
+                (= handler-path target-resolved)
+                ;; external self-transtion
+                (external-self-transition-actions handler-path new-nodes)
 
-              :else
-              (collect-actions nodes
-                               new-nodes
-                               external-transition?))
+                :else
+                (collect-actions nodes
+                                 new-nodes
+                                 external-transition?))
 
-            actions (concat exit actions entry)]
-        (assoc state
-               :_nodes new-nodes
-               :_changed true
-               :_state new-value
-               :_prev-state _state
-               :_actions actions)))))
+              actions (concat exit actions entry)]
+          [new-value actions (has-eventless-transition? new-nodes)])))))
 
-(defn -transition
-  [fsm state event {:keys [exec debug input-event] :or {exec true}}]
+(defn- -do-tx-recursive
+  [node
+   {:as state
+    :keys [_state]}
+   event
+   input-event
+   ignore-unknown-event?]
+  ;; For parallel node, divide and concur its regions recursively
+  (if (parallel? node)
+    (-do-tx-parallel node state event input-event)
+    (let [_statev (u/ensure-vector _state)
+          _state-leaf (last _statev)]
+      (if (map? _state-leaf)
+        ;; a hierarchical node with a parallel node at its leaf
+        ;; e.g:
+        ;;
+        ;;  [:s1 {:s1.1 {:pa :pa1 :pb :pb1}}]
+        (do
+          (assert (= (count _state-leaf) 1))
+          (let [[k para-node]
+                (get-last-para-child node _statev)
+
+                para-state
+                (assoc state :_state (-> _state-leaf vals last))
+
+                ;; TODO: what if the tx jumps out of the parallel node?
+                [new-leaf-state actions _pending-eventless-tx?]
+                (-do-tx-parallel para-node
+                                 para-state
+                                 event
+                                 input-event)]
+            [(-> _statev
+                 (updatev-last assoc k new-leaf-state)
+                 u/devectorize)
+             actions
+             _pending-eventless-tx?]))
+        ;; Bingo! we reach the bottom of the recursion, a.k.a the simplest form =>
+        ;; a hierarchical node, without any parallel node within it.
+        (-do-tx-hierarchical node
+                             state
+                             event
+                             input-event
+                             ignore-unknown-event?)))))
+
+(defn -transition-once
+  "Do the transition, but would not follow new eventless transitions defined on
+  the target state."
+  [fsm state event
+   {:keys [exec debug input-event ignore-unknown-event?]
+    :or {exec true}}]
   (let [;; input-event is set to the original event when event is :fsm/always for
-        ;; eventless transitions
-        input-event (or input-event event)
-        new-state (resolve-transition fsm state event input-event)]
+        ;; eventless transitions. We pass both along because even in eventless
+        ;; transitions, the actions function may want to access the original event
+        ;; instead of :fsm/always
+        input-event
+        (or input-event event)
+
+        [new-value actions _pending-eventless-tx?]
+        (-do-tx-recursive fsm
+                          state
+                          event
+                          input-event
+                          ignore-unknown-event?)
+
+        new-state (assoc state
+                    :_state new-value
+                    :_pending-eventless-tx? _pending-eventless-tx?
+                    :_prev-state (:_state state)
+                    :_actions actions)]
     (if exec
       (execute
-       fsm
-       new-state
-       input-event
-       {:debug debug})
+        fsm
+        new-state
+        input-event
+        {:debug debug})
       new-state)))
+
+(defn -transition-impl
+  "Return the new state and the actions to execute."
+  [fsm state input-event opts]
+  ;; The loop is used to execute eventless transitions.
+  (loop [i 0
+         state (dissoc state :_actions)
+         actions []]
+
+    (when (> i 10)
+      ;; Prevent bugs in application's code that two states uses eventless
+      ;; transitions and the states jumps back and forth between them.
+      (throw (ex-info (str "Possible dead loop on event" (:type input-event))
+                      {:state (:_state state)})))
+
+    (let [event
+          (if (zero? i)
+            input-event
+            ;; The first iteration of the loop is the real input event, while the
+            ;; following ones are eventless transitions.
+            {:type :fsm/always})
+
+          {:keys [_actions _pending-eventless-tx?]
+           :as state}
+          (-transition-once fsm state event opts)
+
+          ;; _ #p {:_state (:_state state) :event (:type input-event)}
+
+          actions
+          (if _actions
+            (into actions _actions)
+            actions)]
+      (if _pending-eventless-tx?
+        (recur (inc i) (dissoc state :_pending-eventless-tx?) actions)
+        [state actions]))))
 
 (defn transition
   "Given a machine with its current state, trigger a transition to the
   next state based on the given event.
 
+  The nature and purpose of the transition impl is to get two outputs:
+  - the new state
+  - the actions to execute
+
   By default it executes all actions, unless the `exec` opt is false,
   in which case it is a pure function."
-
   ([fsm state event]
    (transition fsm state event nil))
-  ([fsm state event {:as opts :keys [exec debug] :or {exec true}}]
-   (let [input-event
-         (canon-event event)
+  ([fsm state event
+    {:as opts
+     :keys [exec debug]
+     :or {exec true}}]
+   (let
+     [input-event
+      (canon-event event)
 
-         opts
-         (assoc opts :input-event input-event)
+      opts
+      (assoc opts :input-event input-event)
 
-         [new-state actions]
-         (loop [i 0
-                state (dissoc state :_actions)
-                actions []]
-
-           (when (> i 10)
-             (throw (ex-info (str "Possible dead loop on event" (:type input-event))
-                      {:state (:_state state)})))
-
-           (let [event
-                 (if (zero? i)
-                   input-event
-                   {:type :fsm/always})
-
-                 {:keys [_nodes _actions _changed] :as state}
-                 (-transition fsm state event opts)
-
-                 ;; _ #p {:_state (:_state state) :event (:type input-event)}
-
-                 actions
-                 (if _actions
-                   (into actions _actions)
-                   actions)]
-             (if (and _changed
-                      _nodes
-                      (has-eventless-transition? _nodes))
-               (recur (inc i) state actions)
-               [state actions])))]
+      [new-state actions]
+      (-transition-impl
+        fsm
+        (dissoc state :_actions)
+        input-event
+        opts)]
      ;; get rid of the internal fields
-     (cond-> (dissoc new-state :_changed :_nodes :_prev-state)
+     (cond-> (dissoc new-state :_pending-eventless-tx? :_prev-state)
        (or (not exec) debug)
        (assoc :_actions actions)))))
 
-(defn- valid-target? [fsm path]
-  (try
-    (expand-path fsm path)
-    true
-    (catch #?(:clj clojure.lang.ExceptionInfo :cljs js/Error) e
-      (if (= (::type (ex-data e)) :invalid-path)
-        false
-        (throw e)))))
+(defn- valid-target? [abs-root root path]
+  (let [node (if (double-absolute? path)
+               abs-root
+               root)]
+    (try
+      (_state->path node path)
+      true
+      (catch #?(:clj clojure.lang.ExceptionInfo :cljs js/Error) e
+        (if (= (::type (ex-data e)) :invalid-path)
+          false
+          (throw e))))))
 
 (defn validate-targets
   "Walk the fsm and try to resolve all transition targets. Raise an
   exception if any target is invalid."
-  ([fsm]
-   (validate-targets fsm fsm []))
-  ([fsm node current-path]
-   (let [transitions (mapcat identity (-> node :on vals))
-         targets (->> transitions
-                      (map :target)
-                      ;; nil target target means self-transition,
-                      ;; which is always valid.
-                      (remove nil?))]
-     (when (seq targets)
-       (doseq [target targets
-               :let [target (resolve-target current-path target)]]
-         (when-not (valid-target? fsm target)
-           (throw (ex-info (str "Invalid target " target)
-                    {:target target :state current-path}))))))
-   (when-let [initial (:initial node)]
-     (let [initial-node (get-in node [:states initial])]
-       (when-not initial-node
-         (throw (ex-info (str "Invalid initial target " initial)
-                  {:initial initial :state current-path})))))
-   (doseq [[name child] (:states node)]
-     (validate-targets fsm child (conj current-path name)))))
+  ([root]
+   (validate-targets root root root []))
+  ([abs-root root node current-path]
+   (if (parallel? node)
+     (do
+       ;; #p current-path
+       (doseq [[_ region] (:regions node)]
+         (validate-targets abs-root region region [])))
+     (do
+       (let [transitions (mapcat identity (-> node :on vals))
+             targets (->> transitions
+                          (map :target)
+                          ;; nil target target means self-transition,
+                          ;; which is always valid.
+                          (remove nil?))]
+         (when (seq targets)
+           (doseq [target targets
+                   :let [target (resolve-target current-path target)]]
+             (when-not (valid-target? abs-root root target)
+               (throw (ex-info (str "Invalid target " target)
+                        {:target target :state current-path}))))))
+       (when-let [initial (:initial node)]
+         (let [initial-node (get-in node [:states initial])]
+           (when-not initial-node
+             (throw (ex-info (str "Invalid initial target " initial)
+                      {:initial initial :state current-path})))))
+       (doseq [[name child] (:states node)]
+         (validate-targets abs-root root child (conj current-path name)))))))
 
 (defn matches [state value]
   (let [v1 (u/ensure-vector (:value state))

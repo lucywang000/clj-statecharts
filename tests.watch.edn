@@ -7,6 +7,7 @@
  :reporter        kaocha.report/documentation,
  :tests           [{:id           :watch,
                     :kaocha.filter/focus-meta [:focus]
+                    :kaocha.filter/skip-meta [:skip]
                     :ns-patterns  ["statecharts.*-test$"],
                     :source-paths ["src"],
                     :test-paths   ["test"]}],
