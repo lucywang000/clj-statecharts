@@ -8,6 +8,7 @@ headless = true
 - [Actions]({{< relref "/docs/actions" >}})
 - [Transitions]({{< relref "/docs/transitions" >}})
 - [Nested States]({{< relref "/docs/nested-states" >}})
+- [Parallel States]({{< relref "/docs/parallel-states" >}})
 - [Identifying States]({{< relref "/docs/identifying-states" >}})
 - [Guarded Transitions]({{< relref "/docs/guards" >}})
 - [Delayed Transitions]({{< relref "/docs/delayed" >}})
