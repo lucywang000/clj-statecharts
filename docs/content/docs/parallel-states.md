@@ -90,9 +90,11 @@ application that doesn't depend on each other. Conceptually:
                       :load-failed {}}}}
 ```
 
-(1) Use `{:type :parallel}` to define a parallel state node (2) Define the child
-regions in the `:regions` key. (3) Each child node of a parallel node must be a
-nested state node.
+(1) Use `{:type :parallel}` to define a parallel state node
+
+(2) Define the child regions in the `:regions` key.
+
+(3) Each child node of a parallel node must be a nested state node.
 
 ### Nested parallel state node
 
@@ -130,10 +132,16 @@ However you can put a parallel node anywhere in the state chart, e.g.:
                                         {}}}}}}}}}}}
 ```
 
-(1) The root node is a hierarchical node, with two regions `:p1` and `:p2` (2)
-`:p1` is a hierarchical node (3) `:p2` is a parallel node with two regions
-`:p2.a` and `:p2.b` (4) `:p2.a` is a hierarchical node (5)(6) `:p2.b` is a
-hierarchical node, but one of its children `:p2b2` is a parallel node.
+(1) The root node is a hierarchical node, with two regions `:p1` and `:p2`
+
+(2) `:p1` is a hierarchical node
+
+(3) `:p2` is a parallel node with two regions `:p2.a` and `:p2.b`
+
+(4) `:p2.a` is a hierarchical node
+
+(5)(6) `:p2.b` is a hierarchical node, but one of its children `:p2b2` is a
+parallel node.
 
 We can build arbitrary complex statecharts this way, but it's highly discouraged
 because it makes the statecharts harder and harder to reason about.
@@ -189,7 +197,7 @@ Currently these use cases are not supported:
 
 These features would be addressed in the near future.
 
-## Useful links:
+## Useful links
 
 - [Parallel States in StateCharts 101](https://statecharts.github.io/glossary/parallel-state.html)
 - [XState's parallel states support](https://xstate.js.org/docs/guides/parallel.html)
