@@ -401,7 +401,7 @@
   [handler nodes])
 
 (defn has-eventless-transition? [nodes]
-  (some? (some #(get-in % [:on :fsm/always]) nodes)))
+  (boolean (some #(get-in % [:on :fsm/always]) nodes)))
 
 (defn- updatev-last
   "Update the last element of a vector"
@@ -607,9 +607,9 @@
                               (not= domain path))
                           (is-prefix? domain path))))))
 
-(defn get-entry-set
+(defn compute-entry-set
   [fsm txs]
-  (let [get-tx-entry
+  (let [get-tx-entry-set
         (fn [{:keys [target domain external?]
               :as _tx}]
           ;; target=nil means internal self-transtion, where no entry/exit would
@@ -640,12 +640,16 @@
                                   regions)
 
                                 :compound
+                                ;; for compound node that has no descedents in the
+                                ;; entry set, add its initial state to the next
+                                ;; seeds of next round of iteration.
                                 (when-not (some (fn [x]
                                                   (and (not= path x)
                                                        (is-prefix? path x)))
                                                 entry-set)
                                   [(get-initial-path node)])
 
+                                ;; an atomic node, nothing to add for it.
                                 nil)))))
                       (reduce concat))
 
@@ -657,7 +661,7 @@
                     ;; new the new nodes in this iteration as the new seeds
                     new)
                   entry-set)))))]
-    (->> (map get-tx-entry txs)
+    (->> (map get-tx-entry-set txs)
          (reduce into (sorted-set)))))
 
 (defn get-actions [fsm path k]
@@ -676,14 +680,13 @@
 
 (defn configuration->_state
   "Represent the current configuration in a user-friendly form. It's the reverse
-  operation of `_state->configuration"
-  ([fsm configuration]
-   (configuration->_state fsm configuration false))
-  ([fsm configuration parent-compound?]
+  operation of `_state->configuration`.
+  "
+  [fsm configuration]
    (-> (loop [paths configuration
               node fsm
               _state []
-              parent-compound? parent-compound?]
+              parent-compound? false]
          (let [paths (into [] (remove empty? paths))]
            (cond
              (parallel? node)
@@ -698,6 +701,9 @@
                                                              next
                                                              (get groups k))))
                                   children)]
+               ;; If the parent node of the parallel node is a compound node (i.e.
+               ;; the parallel node is not the root), the notation is a
+               ;; single-valued map, e.g. [:s1 {:s1.1 {:p1 :x :p2 :y}}]
                (if parent-compound?
                  (updatev-last _state
                                (fn [k]
@@ -719,8 +725,9 @@
                      (conj _state k)))))
 
              :else
+             ;; some atomic node
              (conj _state (ffirst paths)))))
-       simple-state)))
+       simple-state))
 
 
 (defn -do-transition
@@ -732,34 +739,32 @@
         atomic-nodes (filter #(= (:type %) :atomic) configuration)
         _ (map :path configuration)
         txs (map #(select-one-tx fsm % state event input-event) atomic-nodes)
-        active-paths (->> configuration
-                          (map :path)
-                          (into #{}))
         exit-set (->> configuration
+                      ;; all active nodes that is covered by some tx domain should
+                      ;; exit itself.
                       (filter (fn [{:keys [path]
                                     :as node}]
-                                (and
-                                  (some
-                                    (fn [{:keys [target domain external?]
-                                          :as tx}]
-                                      (cond
-                                        (= path [])
-                                        ;; only exit the root when the target is
-                                        ;; the root itself
-                                        (and external?
-                                             (= target []))
+                                (some
+                                  (fn [{:keys [target domain external?]
+                                        :as tx}]
+                                    (cond
+                                      (= path [])
+                                      ;; only exit the root when the target is
+                                      ;; the root itself
+                                      (and external?
+                                           (= target []))
 
-                                        (= domain path)
-                                        ;; only include the domain itself
-                                        ;; when it's an external transition
-                                        external?
+                                      (= domain path)
+                                      ;; only include the domain itself
+                                      ;; when it's an external transition
+                                      external?
 
-                                        :else
-                                        (is-prefix? domain path)))
-                                    txs))))
+                                      :else
+                                      (is-prefix? domain path)))
+                                  txs)))
                       (map :path)
                       (into (sorted-set)))
-        entry-set (get-entry-set fsm txs)
+        entry-set (compute-entry-set fsm txs)
         exit-actions (->> exit-set
                           reverse
                           (mapcat #(get-actions fsm % :exit)))
@@ -787,7 +792,7 @@
                        :target    []
                        :external? true
                        :domain    []}
-        entry-set     (get-entry-set fsm [tx])
+        entry-set     (compute-entry-set fsm [tx])
         entry-actions (get-entry-actions fsm entry-set)
         _state        (configuration->_state fsm entry-set)]
     [_state entry-actions]))
