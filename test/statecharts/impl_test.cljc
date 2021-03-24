@@ -857,8 +857,8 @@
 
 ;; Skipped because this is not a common used feature
 ;; https://github.com/davidkpiano/xstate/blob/xstate@4.17.0/packages/core/test/parallel.test.ts#L829
-(deftest ^:skip test-tx-to-parallel-sibling
-  #_(let [fsm
+#_(deftest ^:skip test-tx-to-parallel-sibling
+  (let [fsm
         (impl/machine
           {:id :app
            :type :parallel
