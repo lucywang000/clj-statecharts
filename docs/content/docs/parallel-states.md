@@ -183,20 +183,6 @@ some events is only handled by one child state. However, IMO this is hardly a
 problem given today's hardware technology unless you're building some
 nano-second HFT system.
 
-## Unsupported Use Cases
-
-Currently these use cases are not supported:
-
-- Transitions defined on the parallel node itself are ignored
-- In a statecharts where a hierarchical node has a parallel node as its child,
-  and the current active child is this parallel node:
-  - It's not possible to transition out of the parallel node (but could
-    transition into it from other non-parallel siblings)
-  - If the parallel node could not handle some event, the event would not bubble
-    up to its ancestors
-
-These features would be addressed in the near future.
-
 ## Useful links
 
 - [Parallel States in StateCharts 101](https://statecharts.github.io/glossary/parallel-state.html)

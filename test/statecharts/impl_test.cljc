@@ -31,6 +31,7 @@
 (def inc-c (assign-inc-fn :c))
 (def inc-d (assign-inc-fn :d))
 (def inc-e (assign-inc-fn :e))
+(def inc-f (assign-inc-fn :f))
 
 
 (defn test-machine []
@@ -272,56 +273,6 @@
                    :always {:target :s8
                             :actions :a98}}}}))
 
-(deftest test-_state->path
-  (let [fsm (nested-machine)]
-    (is (= (impl/_state->path fsm :s2)
-           [(-> fsm
-                impl/extract-path-element)
-            (-> fsm
-                :states
-                :s2
-                (assoc :id :s2)
-                impl/extract-path-element)]))
-
-    (is (= (impl/_state->path fsm [:s1])
-           (impl/_state->path fsm [:s1 :s1.1])
-           [(-> fsm
-                (dissoc :states)
-                (impl/extract-path-element))
-            (-> fsm
-                :states
-                :s1
-                (assoc :id :s1)
-                impl/extract-path-element)
-            (-> fsm
-                :states
-                :s1
-                :states
-                :s1.1
-                (assoc :id :s1.1)
-                impl/extract-path-element)
-            (-> fsm
-                (get-in [:states :s1 :states :s1.1 :states :s1.1.1])
-                (assoc :id :s1.1.1)
-                impl/extract-path-element)]))
-
-    (is (= (impl/_state->path fsm [:s1 :s1.2])
-           [(-> fsm
-                (dissoc :states)
-                (impl/extract-path-element))
-            (-> fsm
-                :states
-                :s1
-                (assoc :id :s1)
-                impl/extract-path-element)
-            (-> fsm
-                :states
-                :s1
-                :states
-                :s1.2
-                (assoc :id :s1.2)
-                impl/extract-path-element)]))))
-
 (defn prepare-nested-test []
   (let [fsm (nested-machine)
         init-state (impl/initialize fsm {:exec false})
@@ -373,14 +324,15 @@
       (check-tx [:s1 :s1.1 :s1.1.1] :e1.1.1_1.2
                 :=> [:s1 :s1.2])
       (check-actions [:s1 :s1.1 :s1.1.1] :e1.1.1_1.2
-                     :=> [:exit1.1.1 :exit1.1 :entry1.2])
+                     :=> [:exit1.1.1 :exit1.1 :exit1 :entry1 :entry1.2])
       (check-actions [:s1 :s1.1 :s1.1.1] :e1.1.1_3
                      :=> [:exit1.1.1 :exit1.1 :exit1 :entry3]))
 
     (testing "event handled by root"
       (check-tx :s3 :e01 :=> [:s1 :s1.1 :s1.1.1]))
       (check-actions [:s3] :e01 :=> [:exit3 root-a01 :entry1 :entry1.1 :entry1.1.1])
-      ))
+
+    ))
 
 (deftest test-self-transitions
   (let [{:keys [init-state check-tx check-actions]} (prepare-nested-test)]
@@ -397,16 +349,16 @@
 
     (testing "internal self-transition on root"
       (check-tx [:s1 :s1.1 :s1.1.1] :e0_0_internal :=> [:s1 :s1.1 :s1.1.1])
-      (check-actions :s1 :e0_0_internal
+      (check-actions [:s1 :s1.1 :s1.1.1] :e0_0_internal
                      :=> [:a_0_0_internal]))
 
     (testing "external self-transition on root"
       (check-tx [:s1 :s1.1 :s1.1.1] :e0_0_external :=> [:s1 :s1.1 :s1.1.1])
       (check-actions [:s1 :s1.1 :s1.1.1] :e0_0_external
                      :=> [:exit1.1.1 :exit1.1 :exit1
+                          :exit0
                           {:action :fsm/unschedule-event
                            :event [:fsm/delay [] 100]}
-                          :exit0
                           :a_0_0_external
                           :entry0
                           {:action :fsm/schedule-event,
@@ -476,65 +428,6 @@
                 (str id)
                 keyword)]
     {:id (kw :s) :entry [(kw :entry)] :exit [(kw :exit)]}))
-
-(deftest test-collection-actions
-  (are [current target external-transition? _ actions]
-      (= (impl/collect-actions current target external-transition?) actions)
-
-    [(make-node "1")]
-    [(make-node "2")]
-    false
-    :=>
-    {:exit [:exit1]
-     :entry [:entry2]}
-
-    [(make-node "1")
-     (make-node "1.1")]
-    [(make-node "1")
-     (make-node "1.2")]
-    false
-    :=>
-    {:exit [:exit1.1]
-     :entry [:entry1.2]}
-
-    [(make-node "1")
-     (make-node "1.1")]
-    [(make-node "1")
-     (make-node "1.2")]
-    true
-    :=>
-    {:exit [:exit1.1 :exit1]
-     :entry [:entry1 :entry1.2]}
-
-    [(make-node "1")
-     (make-node "1.1")]
-    [(make-node "1")
-     (make-node "1.2")
-     (make-node "1.2.1")]
-    false
-    :=>
-    {:exit [:exit1.1]
-     :entry [:entry1.2 :entry1.2.1]}
-
-    [(make-node "1")
-     (make-node "1.1")]
-    [(make-node "1")
-     (make-node "1.2")
-     (make-node "1.2.1")]
-    true
-    :=>
-    {:exit [:exit1.1 :exit1]
-     :entry [:entry1 :entry1.2 :entry1.2.1]}
-
-    [(make-node "1")
-     (make-node "1.1")]
-    [(make-node "2")
-     (make-node "2.1")]
-    false
-    :=>
-    {:exit [:exit1.1 :exit1]
-     :entry [:entry2 :entry2.1]}
-    ))
 
 (deftest test-verify-targets-when-creating-machine
   (are [fsm re] (thrown-with-msg? #?(:clj Exception
@@ -679,114 +572,6 @@
                                                           :states {:p3c2.b1
                                                                    {}}}}}}}}}}}))
 
-(defn alt-parallel-machine
-  []
-  (impl/machine
-          {:id :test
-           :context {:a 0
-                     :b 0
-                     :c 0
-                     :d 0
-                     :e 0}
-           :initial :p3
-           :states
-           {:p1 {:initial :p11
-                 :states {:p11 {:on {:e12 {:target :p12
-                                           :actions inc-a}}}
-                          :p12 {}}}
-            :p2 {:initial :p21
-                 :states {:p21 {:on {:e12 {:target :p22
-                                           :actions inc-b}}}
-                          :p22 {:always {:target :p23
-                                         :actions inc-b}}
-                          :p23 {}}}
-            ;; p3 is a nested parallel node
-            :p3 {:type :parallel
-                 :regions
-                 {:p3.a {:initial :p3.a1
-                         :states {:p3.a1 {:on {:e12 {:target :p3.a2
-                                                     :actions inc-c}}}
-                                  :p3.a2 {}}}
-                  :p3.b {:initial :p3.b1
-                         :states {:p3.b1 {:on {:e12 {:target :p3.b2
-                                                     :actions inc-d}}}
-                                  :p3.b2 {:always {:target :p3.b3
-                                                   :actions inc-d}}
-                                  :p3.b3 {}}}
-                  :p3.c {:initial :p3c2
-                         :states {:p3c1 {:on {:e331 :p3c2}}
-                                  ;; parallel nest level depth +1
-                                  :p3c2 {:type :parallel
-                                         :regions {:p3c2.a {:initial :p3c2.a1
-                                                          :states {:p3c2.a1 {}}}
-                                                  :p3c2.b {:initial :p3c2.b1
-                                                          :states {:p3c2.b1
-                                                                   {}}}}}}}}}}}))
-
-(deftest test-parallel-_state->path
-  (let [fsm (alt-parallel-machine)
-        format-node (fn [path]
-                      (-> fsm
-                          (get-in path)
-                          (assoc :id (last path))
-                          impl/extract-path-element))]
-    (is
-      (= (impl/_state->path fsm :p3)
-         [(-> fsm
-              impl/extract-path-element)
-          (format-node [:states :p3])
-          {:type :parallel
-           :regions
-           {:p3.a [(format-node [:states :p3 :regions :p3.a])
-                   (format-node [:states :p3 :regions :p3.a :states :p3.a1])]
-
-            :p3.b [(format-node [:states :p3 :p3.b])
-                   (format-node [:states :p3 :regions :p3.b :states :p3.b1])]
-            :p3.c [(format-node [:states :p3 :p3.c])
-                   (format-node [:states :p3 :regions :p3.c :states :p3c2])
-                   {:type :parallel
-                    :regions
-                    {:p3c2.a
-                     [(format-node [:states :p3 :regions :p3.c :states :p3c2 :states
-                                    :p3c2.a])
-                      (format-node [:states :p3 :regions :p3.c :states :p3c2 :states
-                                    :p3c2.a :states :p3c2.a1])]
-
-                     :p3c2.b
-                     [(format-node [:states :p3 :regions :p3.c :states :p3c2 :states
-                                    :p3c2.b])
-                      (format-node [:states :p3 :regions :p3.c :states :p3c2 :states
-                                    :p3c2.b :states :p3c2.b1])]}}
-                  ]}}]))))
-
-(deftest test-path->_state
-  (are [path _ _state]
-       (= (impl/path->_state path)
-          _state)
-
-       [{} {:id :s1}]
-       :=>
-       :s1
-
-       [{} {:id :s1} {:id :s1.1}]
-       :=>
-       [:s1 :s1.1]
-
-       [{} {:id :s1} {:id :s1.1}
-        {:type :parallel
-         :regions {:p1 [{:id :p1}
-                       {:id :p1.1}]
-                  :p2 [{:id :p2}
-                       {:id :p2.2}
-                       {:id :p2.21}]}}]
-       :=>
-       [:s1
-        {:s1.1 {:p1 :p1.1
-                :p2 [:p2.2 :p2.21]}}]
-
-  ))
-
-
 (deftest test-parallel-states
   (let [test-machine (parallel-machine)
 
@@ -823,6 +608,53 @@
             :c 1
             :d 2}))))
 
+(defn alt-parallel-machine
+  []
+  (impl/machine
+    {:id :test
+     :context {:a 0
+               :b 0
+               :c 0
+               :d 0
+               :e 0}
+     :initial :p3
+     :states
+     {:p1 {:initial :p11
+           :states {:p11 {:on {:e12 {:target :p12
+                                     :actions inc-a}}}
+                    :p12 {}}}
+      :p2 {:initial :p21
+           :states {:p21 {:on {:e12 {:target :p22
+                                     :actions inc-b}}}
+                    :p22 {:always {:target :p23
+                                   :actions inc-b}}
+                    :p23 {:entry inc-e}}}
+      ;; p3 is a nested parallel node
+      :p3 {:type :parallel
+           :regions
+           {:p3.a {:initial :p3.a1
+                   :states {:p3.a1 {:on {:e12 {:target :p3.a2
+                                               :actions inc-c}}}
+                            :p3.a2 {}}}
+            :p3.b {:initial :p3.b1
+                   :states {:p3.b1 {:on {:e12 {:target :p3.b2
+                                               :actions inc-d}}}
+                            :p3.b2 {:always {:target :p3.b3
+                                             :actions inc-d}}
+                            :p3.b3 {}}}
+            :p3.c {:initial :p3c2
+                   :exit inc-f
+                   :states {:p3c1 {:on {:e331 :p3c2}}
+                            ;; parallel nest level depth +1
+                            :p3c2 {:type :parallel
+                                   :exit inc-f
+                                   :regions {:p3c2.a {:initial :p3c2.a1
+                                                      :states {:p3c2.a1
+                                                               {:on {:e-331out [:> :p2 :p23]}}}}
+                                             :p3c2.b {:initial :p3c2.b1
+                                                      :states {:p3c2.b1
+                                                               {}}}}}}}}}}}))
+
 (deftest test-alt-parallel-states
   (let [test-machine (alt-parallel-machine)
 
@@ -834,7 +666,8 @@
                        :p3.c {:p3c2 {:p3c2.a :p3c2.a1
                                      :p3c2.b :p3c2.b1}}}}))
         new-state (impl/transition test-machine state :e12)
-        new-state2 (impl/transition test-machine state :e331)]
+        new-state2 (impl/transition test-machine state :e331)
+        new-state3 (impl/transition test-machine new-state2 :e-331out)]
     (is (= new-state
            {:_state {:p3 {:p3.a :p3.a2
                           :p3.b :p3.b3
@@ -854,7 +687,15 @@
             :b 0
             :c 0
             :d 0
-            :e 0}))))
+            :e 0}))
+    (is (= new-state3
+           {:_state [:p2 :p23]
+            :a 0
+            :b 0
+            :c 0
+            :d 0
+            :e 1
+            :f 2}))))
 
 (deftest test-simple-parallel-states
   (let [test-machine
@@ -892,8 +733,7 @@
                    :regions {:pa {:initial :pa1
                                  :states {:pa1 {:on {:e12 :pa2
                                                      :e13 :pa3
-                                                     :e2 [:>> :s2]
-                                                     }}
+                                                     :e2 [:> :s2]}}
                                           :pa2 {}
                                           :pa3 {:always {:target :pa4}}
                                           :pa4 {}}}
@@ -902,6 +742,52 @@
                                           :pb2 {}}}}}
             :s1.2 {}}}
       :s2 {:on {:e21 :s1}}}}))
+
+(deftest test-_state->configuration
+  (let [fsm non-root-parallel-states
+        format-node (fn [get-path path type]
+                      (-> fsm
+                          (get-in get-path)
+                          (select-keys [:on :exit :entry])
+                          (assoc :path path
+                                 :type type)))]
+    (are [_state _ configuration]
+         (= (set (impl/_state->configuration fsm _state))
+            (set configuration))
+
+         []
+         :=>
+         [(format-node [] [] :compound)]
+         [:s1]
+         :=>
+         [(format-node [] [] :compound)
+          (format-node [:states :s1] [:s1] :compound)]
+         [:s1 :s1.1]
+         :=>
+         [(format-node [] [] :compound)
+          (format-node [:states :s1] [:s1] :compound)
+          (format-node [:states :s1 :states :s1.1] [:s1 :s1.1] :parallel)])
+
+    (is (= (sort (impl/_state->configuration fsm
+                                             {:p1 :p11
+                                              :p2 :p21
+                                              :p3 {:p3.a :p3.a1
+                                                   :p3.b :p3.b1
+                                                   :p3.c :p3c1}}
+                                             :no-resolve?
+                                             true))
+           [[]
+            [:p1]
+            [:p2]
+            [:p3]
+            [:p1 :p11]
+            [:p2 :p21]
+            [:p3 :p3.a]
+            [:p3 :p3.b]
+            [:p3 :p3.c]
+            [:p3 :p3.a :p3.a1]
+            [:p3 :p3.b :p3.b1]
+            [:p3 :p3.c :p3c1]]))))
 
 (deftest test-non-root-parallel-states
   (let [test-machine non-root-parallel-states
@@ -912,7 +798,7 @@
 
         new-state (impl/transition test-machine state :e12)
         new-state2 (impl/transition test-machine state :e13)
-        ;; new-state3 (impl/transition test-machine state :e2)
+        new-state3 (impl/transition test-machine state :e2)
         new-state4 (impl/transition test-machine state :e0)]
     (is (= (:_state new-state)
            [:s1 {:s1.1 {:pa :pa2
@@ -920,8 +806,8 @@
     (is (= (:_state new-state2)
            [:s1 {:s1.1 {:pa :pa4
                         :pb :pb1}}]))
-    #_(is (= (:_state new-state3) :s2))
-    #_(is (= (:_state new-state4) :s2))))
+    (is (= (:_state new-state3) :s2))
+    (is (= (:_state new-state4) :s2))))
 
 (deftest test-non-root-parallel-states-tx-into
   (let [test-machine non-root-parallel-states
@@ -931,6 +817,126 @@
     (is (= (:_state state1) [:s1 {:s1.1 {:pa :pa1
                               :pb :pb1}}]))))
 
-(deftest test-get-last-para-child
-  (is (= (impl/get-last-para-child non-root-parallel-states [:s1 {:s1.1 {:pa :pa1 :pb :pb1}}])
-         [:s1.1 (get-in non-root-parallel-states [:states :s1 :states :s1.1])])))
+;!zprint {:format :next :set {:respect-nl? true :sort? false}}
+(deftest test-configuration->_state
+  (are [configuration _ _state]
+       (= (impl/configuration->_state non-root-parallel-states configuration)
+          _state)
+
+       [[:s1] [:s1 :s1.2]]
+       :=>
+       [:s1 :s1.2]
+  )
+
+  (are [configuration _ _state]
+       (= (impl/configuration->_state (parallel-machine) configuration)
+          _state)
+       #{[]
+         [:p1]
+         [:p1 :p12]
+         [:p2]
+         [:p2 :p23]
+         [:p3]
+         [:p3 :p3.a]
+         [:p3 :p3.a :p3.a2]
+         [:p3 :p3.b]
+         [:p3 :p3.b :p3.b3]
+         [:p3 :p3.c]
+         [:p3 :p3.c :p3c2]
+         [:p3 :p3.c :p3c2 :p3c2.a]
+         [:p3 :p3.c :p3c2 :p3c2.a :p3c2.a1]
+         [:p3 :p3.c :p3c2 :p3c2.b]
+         [:p3 :p3.c :p3c2 :p3c2.b :p3c2.b1]}
+       :=>
+       {:p1 :p12
+        :p2 :p23
+        :p3 {:p3.a :p3.a2
+             :p3.b :p3.b3
+             :p3.c {:p3c2 {:p3c2.a :p3c2.a1
+                           :p3c2.b :p3c2.b1}}}}))
+
+;; Skipped because this is not a common used feature
+;; https://github.com/davidkpiano/xstate/blob/xstate@4.17.0/packages/core/test/parallel.test.ts#L829
+(deftest ^:skip test-tx-to-parallel-sibling
+  #_(let [fsm
+        (impl/machine
+          {:id :app
+           :type :parallel
+           :regions {:pages {:initial :about
+                             :states {:about {:on {:e-dashboard :dashboard}}
+                                      :dashboard {:on {:e-about :about}}}}
+                     :menu {:initial :closed
+                            :states {:closed {:on {:toggle :opened}}
+                                     :opened {:on {:toggle :closed
+                                                   :go-to-dashboard
+                                                   [:> :pages :dashboard]}}}}}})
+
+        state (impl/initialize fsm)
+        menu-opened-state (impl/transition fsm state :toggle)
+        dashboard-state (impl/transition fsm menu-opened-state :go-to-dashboard)]
+    (is (= (:_state state)
+           {:pages :about
+            :menu :closed}))
+    (is (= (:_state menu-opened-state)
+           {:pages :about
+            :menu :opened}))
+    (is (= (:_state dashboard-state)
+           {:pages :dashboard
+            :menu :opened}))))
+
+(defn word-machine
+  []
+  (impl/machine
+    {:id :word
+     :type :parallel
+     :on {:reset []}
+     :regions {:bold {:initial :off
+                      :states {:on {:on {:toggle-bold :off}}
+                               :off {:on {:toggle-bold :on}}}}
+               :underline {:initial :off
+                           :states {:on {:on {:toggle-underline :off}}
+                                    :off {:on {:toggle-underline :on}}}}
+               :italics {:initial :off
+                         :states {:on {:on {:toggle-italics :off}}
+                                  :off {:on {:toggle-italics :on}}}}
+
+               :list {:initial :none
+                      :states {:none {:on {:bullets :bullets
+                                           :numbers :numbers}}
+                               :bullets {:on {:none :none
+                                              :numbers :numbers}}
+                               :numbers {:on {:bullets :bullets
+                                              :none :none}}}}
+              }}))
+
+;; https://github.com/davidkpiano/xstate/blob/xstate@4.17.0/packages/core/test/parallel.test.ts#L496
+(deftest test-word-machine
+  (let [fsm (word-machine)
+        state (impl/initialize fsm)
+        init-state {:bold :off
+                  :italics :off
+                  :underline :off
+                  :list :none}
+        _ (is (= (:_state state) init-state))]
+    (are [event _ _state]
+        (= (:_state (impl/transition fsm state event))
+           _state)
+      :toggle-bold :=> (assoc init-state :bold :on)
+      :toggle-underline :=> (assoc init-state :underline :on)
+      :toggle-italics :=> (assoc init-state :italics :on)
+      :reset :=> init-state
+
+      )))
+
+(deftest test-parallel-regions-without-state
+  (let [fsm (impl/machine {:id :foo
+                           :type :parallel
+                           :regions {:foo {}
+                                     :bar {}
+                                     :baz {:initial :one
+                                           :states {:one {:on {:e :two}}
+                                                    :two {}}}}})
+        state (impl/initialize fsm)
+        _ (is (= (:_state state) {:foo nil :bar nil :baz :one}))
+        new-state (impl/transition fsm state :e)]
+    (is (= (:_state new-state) {:foo nil :bar nil :baz :two}))))

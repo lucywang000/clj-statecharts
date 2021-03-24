@@ -106,7 +106,6 @@
         transition-event
         path
         (fn [db [_ fsm-event data :as args]]
-          ;; #p args
           (let [fsm-event (u/ensure-event-map fsm-event)
                 more-data (when (> (count args) 3)
                             (subvec args 2))]
