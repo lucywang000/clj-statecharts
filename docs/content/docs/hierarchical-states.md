@@ -4,6 +4,8 @@ title: "Hierarchical States"
 
 # Hierarchical States
 
+(a.k.a compound states or nested states)
+
 ## About Hierarchical States (a.k.a Compound States)
 
 One of the greatest power of statecharts is that it could prevent the

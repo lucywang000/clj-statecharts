@@ -8,8 +8,8 @@ State Machine and StateCharts for Clojure(Script). Inspired by [XState](https://
 Most features of statecharts are supported:
 
 * Declarative statecharts definition
-* Compound (a.k.a nested) states
-* Parallel (a.k.a concurrent) states
+* Hierarchical states (a.k.a compound or nested states)
+* Parallel states (a.k.a concurrent states or orthogonal regions)
 * Transition actions & Entry/Exit actions
 * Guarded transitions
 * Delayed transitions

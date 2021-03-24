@@ -4,6 +4,8 @@ title: 'Parallel States'
 
 # Why Parallel States
 
+(a.k.a concurrent states or orthogonal regions)
+
 Usually within a statecharts, all states are tightly related and mutual
 exclusive to each other (e.g. `uploading` and `uploaded` in a file
 application.).
