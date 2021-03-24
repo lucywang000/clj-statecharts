@@ -24,8 +24,8 @@ It just contains all the possible transitions.
 The state itself (mainly) contains two piece of information:
 
 - the current state value, e.g. `:connecting`, or `[:connecting :handshake]`.
-  (see [Nested States]({{< relref "docs/nested-states.md" >}}) for how to
-  represent nested states).
+  (see [Hierarchical States]({{< relref "docs/hierarchical-states.md" >}}) for how to
+  represent hierarchical states).
 - the current state context, e.g. number of seconds to back off before next
   connection attempt.
 

@@ -94,15 +94,15 @@ application that doesn't depend on each other. Conceptually:
 
 (2) Define the child regions in the `:regions` key.
 
-(3) Each child node of a parallel node must be a nested state node.
+(3) Each child node of a parallel node must be a hierarchical state node.
 
-### Nested parallel state node
+### Hierarchical parallel state node
 
 In the example above, the root node of the statecharts is a parallel node.
 However you can put a parallel node anywhere in the state chart, e.g.:
 
 ```clojure
-{:id :nested-parallel-demo
+{:id :hierarchical-parallel-demo
  :initial :p2
  :states                                  ;; (1)
  {:p1                                     ;; (2)
@@ -110,7 +110,7 @@ However you can put a parallel node anywhere in the state chart, e.g.:
    :states {:p11 {:on {:e12 :p12}}
             :p12 {}}}
 
-  ;; p2 is a nested parallel node
+  ;; p2 is a hierarchical parallel node
   :p2                                     ;; (3)
   {:type :parallel
    :regions

@@ -7,7 +7,7 @@ headless = true
 - [Concepts: Machine, State, Service]({{< relref "/docs/concepts" >}})
 - [Actions]({{< relref "/docs/actions" >}})
 - [Transitions]({{< relref "/docs/transitions" >}})
-- [Nested States]({{< relref "/docs/nested-states" >}})
+- [Hierarchical States]({{< relref "/docs/hierarchical-states" >}})
 - [Parallel States]({{< relref "/docs/parallel-states" >}})
 - [Identifying States]({{< relref "/docs/identifying-states" >}})
 - [Guarded Transitions]({{< relref "/docs/guards" >}})

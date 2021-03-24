@@ -11,7 +11,7 @@ State Machine and StateCharts for Clojure(Script). Inspired by [XState](https://
 Most features of statecharts are supported:
 
 * Declarative statecharts definition
-* Compound (nested) states
+* Compound (hierarchical) states
 * Transition actions & Entry/Exit actions
 * Guarded transitions
 * Delayed transitions

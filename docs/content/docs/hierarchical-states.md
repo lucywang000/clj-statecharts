@@ -1,10 +1,10 @@
 ---
-title: "Nested States"
+title: "Hierarchical States"
 ---
 
-# Nested States
+# Hierarchical States
 
-## About Nested States (a.k.a Compound States)
+## About Hierarchical States (a.k.a Compound States)
 
 One of the greatest power of statecharts is that it could prevent the
 "states explosion" problem of a tradition finite state machine. The power
