@@ -36,11 +36,11 @@ The files property has the following states:
 - `props-load-failed`
 
 Most people would feel comfortable to model this screen with two statecharts.
-But as more features are added, we'll need to more and more disparate
-statecharts. For instance, each file could have a list of comments, which would
-pop out when a user clicks a "show comments" button. Of course we can just add
-one more new statecharts, but it's obvious to conclude that this doesn't look
-that appealing, because:
+But as more features are added, we'll need to create and maintain and reason
+about more and more disparate statecharts. For instance, each file could have a
+list of comments, which would pop out when a user clicks a "show comments"
+button. Of course we can just add one more new statecharts, but it's obvious to
+conclude that this doesn't look that appealing, because:
 
 1. With the states scattered in more and more multiple places, it becomes harder
    and harder for us to see and reason about "the big picture" of the current
@@ -173,17 +173,17 @@ because it makes the statecharts harder and harder to reason about.
 
 Nothing.
 
-Some may say "it's more complex". But the complexity is a result of the inheritent
-complexity of the application itself, not introduced by using parallel nodes in the
-statecharts. The alternative is to use multiple smaller statecharts. However to
-keep track and reason about all of these smaller statecharts introduces extra cost
-both in your code and in your mind.
+Some may say "it's more complex". But the complexity is a result of the
+inheritent complexity of the application itself, not introduced by using
+parallel nodes in the statecharts. The alternative is to use multiple smaller
+statecharts. However to keep track and reason about all of these smaller
+statecharts introduces extra cost both in your code and in your mind.
 
 Some may worry about "there would be a performance impact", since for a parallel
-state, each event is dispatched to all its child states and in lots of cases some
-events is only handled by one child state. However, IMO this is hardly a problem
-given today's hardware technology, unless you're building some nano-second HFT
-system.
+state, each event is dispatched to all its child states and in lots of cases
+some events is only handled by one child state. However, IMO this is hardly a
+problem given today's hardware technology, unless you're building some
+nano-second HFT system.
 
 ## Useful links
 
