@@ -171,17 +171,17 @@ because it makes the statecharts harder and harder to reason about.
 
 Nothing.
 
-Some may say "it's more complex". But the complexity is a result of the
-inheritent complexity of the application itself, not introduced caused by
+Some may say "it's more complex". But the complexity is a result of the inheritent
+complexity of the application itself, not introduced by using parallel nodes in the
 statecharts. The alternative is to use multiple smaller statecharts. However to
-keep track and reason about all of these smaller statecharts introduces extra
-cost both in your code and in your mind.
+keep track and reason about all of these smaller statecharts introduces extra cost
+both in your code and in your mind.
 
 Some may worry about "there would be a performance impact", since for a parallel
-state, each event is dispatched to all its child states and in lots of cases
-some events is only handled by one child state. However, IMO this is hardly a
-problem given today's hardware technology unless you're building some
-nano-second HFT system.
+state, each event is dispatched to all its child states and in lots of cases some
+events is only handled by one child state. However, IMO this is hardly a problem
+given today's hardware technology, unless you're building some nano-second HFT
+system.
 
 ## Useful links
 
