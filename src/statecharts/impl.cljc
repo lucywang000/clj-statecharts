@@ -526,7 +526,6 @@
         paths
         nodes))))
 
-
 (defn backtrack-ancestors-as-paths
   "Return a (maybe lazy) sequence of the node path with all its ancestors, starting from the
   node and goes up."
@@ -729,7 +728,6 @@
              (conj _state (ffirst paths)))))
        simple-state))
 
-
 (defn -do-transition
   [fsm
    {:keys [_state]
@@ -783,8 +781,6 @@
      (has-eventless-transition? (map #(resolve-node fsm %)
                                   entry-set))]
   ))
-
-
 
 (defn -do-init
   [fsm]
@@ -959,7 +955,6 @@
   (let [v1 (u/ensure-vector (:value state))
         v2 (u/ensure-vector value)]
     (is-prefix? v2 v1)))
-
 
 (comment
   (ma/validate keyword? :a)
