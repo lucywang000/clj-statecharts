@@ -940,3 +940,14 @@
         _ (is (= (:_state state) {:foo nil :bar nil :baz :one}))
         new-state (impl/transition fsm state :e)]
     (is (= (:_state new-state) {:foo nil :bar nil :baz :two}))))
+
+
+(comment
+  (let [fsm (parallel-machine)
+        state (impl/initialize fsm)]
+    (simple-benchmark []
+                      (impl/transition fsm
+                                      state
+                                      :e12)
+                      1000))
+  ())

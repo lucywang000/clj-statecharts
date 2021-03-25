@@ -442,43 +442,28 @@
                :atomic)]
     (assoc node :type type)))
 
-;; fsm -> node path -> node
-(defonce node-resolve-cache (atom {}))
-
-(defn -resolve-node-with-cache
-  [root path f]
-  ;; [:s1 :s1.1]
-  (let [fsm-cache (get @node-resolve-cache root)
-        cached (some-> fsm-cache (get path))]
-    (if cached
-      cached
-      (prog1 (f)
-        (swap! node-resolve-cache update root assoc path <>)))))
-
 (defn resolve-node
   ([root path]
    (resolve-node root path false))
   ([root path full?]
    ;; [:s1 :s1.1]
-   (let [f (fn []
-             (let [path (u/ensure-vector path)
-                   node (reduce
-                          (fn [current-root k]
-                            (cond
-                              (parallel? current-root)
-                              (get-in current-root [:regions k])
+   (let [node (let [path (u/ensure-vector path)
+                    node (reduce
+                           (fn [current-root k]
+                             (cond
+                               (parallel? current-root)
+                               (get-in current-root [:regions k])
 
-                              (compound? current-root)
-                              (get-in current-root [:states k])
+                               (compound? current-root)
+                               (get-in current-root [:states k])
 
-                              :else
-                              (reduced nil)))
-                          root
-                          path)]
-               (some-> node
-                       (add-node-type)
-                       (assoc :path path))))
-         node (-resolve-node-with-cache root path f)]
+                               :else
+                               (reduced nil)))
+                           root
+                           path)]
+                (some-> node
+                        (add-node-type)
+                        (assoc :path path)))]
      (if full?
        node
        (some-> node

@@ -14,9 +14,11 @@ title: "Difference from XState"
 * Last but not least, xstate uses strings to represent states
   everywhere, but in clj/cljs we tend to use keywords instead.
 
-## Unsupported XState Features
+## Unsupported XState/SCXML Features
 
 * invoking another machine/promise/actor
+* final states & done signals
+* history states
 
 ## Different structure for the state map
 

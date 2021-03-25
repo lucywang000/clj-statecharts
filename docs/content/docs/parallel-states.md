@@ -189,3 +189,7 @@ nano-second HFT system.
 
 - [Parallel States in StateCharts 101](https://statecharts.github.io/glossary/parallel-state.html)
 - [XState's parallel states support](https://xstate.js.org/docs/guides/parallel.html)
+
+Note that in xstate the regions are still represented in the `states` key, which I
+think is not a good choice since `states` is also used to represent the children of
+hierarchical states. So in clj-statecharts we use the `:regions` key.
