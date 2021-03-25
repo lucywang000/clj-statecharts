@@ -19,10 +19,15 @@ Most features of statecharts are supported:
 
 Please visit https://lucywang000.github.io/clj-statecharts/ for the documentation.
 
-## Related
+## Related Projects
 
 - [Statecharts 101](https://statecharts.github.io/)
 - [XState](https://github.com/davidkpiano/xstate), which inspired this project
+
+## Blogs & Show Cases
+
+* [Using clj-statecharts to Manage Character Animations](https://doughamil.github.io/gamedev/2021/03/24/statecharts-for-animation.html)
+
 
 ## License
 
