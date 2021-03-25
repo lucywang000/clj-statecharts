@@ -24,7 +24,7 @@ Please visit https://lucywang000.github.io/clj-statecharts/ for the documentatio
 - [Statecharts 101](https://statecharts.github.io/)
 - [XState](https://github.com/davidkpiano/xstate), which inspired this project
 
-## Blogs & Show Cases
+## Articles & Show Cases
 
 * [Using clj-statecharts to Manage Character Animations](https://doughamil.github.io/gamedev/2021/03/24/statecharts-for-animation.html)
 
