@@ -429,7 +429,7 @@
                 keyword)]
     {:id (kw :s) :entry [(kw :entry)] :exit [(kw :exit)]}))
 
-(deftest test-verify-targets-when-creating-machine
+(deftest ^:focus test-verify-targets-when-creating-machine
   (are [fsm re] (thrown-with-msg? #?(:clj Exception
                                      :cljs js/Error) re (impl/machine fsm))
     {:id :fsm
@@ -459,6 +459,18 @@
      :states {:s1 {:always {:guard :g12
                             :target :s2}}}}
     #"target.*s2"
+
+    {:id :fsm
+     :type :parallel
+     :regions {:p1 {:initial :p12
+                    :states {:p11 {}}}}}
+    #"target.*p12"
+
+    {:id :fsm
+     :type :parallel
+     :regions {:p1 {:initial :p11
+                    :states {:p11 {:on {:e1 :p12}}}}}}
+    #"target.*p12"
 
     ))
 

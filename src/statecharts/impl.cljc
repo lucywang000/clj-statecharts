@@ -934,7 +934,10 @@
            (throw (ex-info (str "Invalid initial target " initial)
                     {:initial initial :state current-path})))))
      (doseq [[name child] (:states node)]
-       (validate-targets root child (conj current-path name))))))
+       (validate-targets root child (conj current-path name)))
+     (when (parallel? node)
+       (doseq [[name child] (:regions node)]
+         (validate-targets root child (conj current-path name)))))))
 
 (defn matches [state value]
   (let [v1 (u/ensure-vector (:value state))
