@@ -691,7 +691,7 @@
             :e 0}))
     (is (thrown-with-msg? #?(:clj Exception
                              :cljs js/Error)
-                          #"Unknown fsm event"
+                          #"unknown event"
                           (impl/transition test-machine state :e331)))
     (is (= new-state3
            {:_state [:p2 :p23]
@@ -815,7 +815,7 @@
     (is (= (:_state new-state4) :s2))
     (is (thrown-with-msg? #?(:clj Exception
                              :cljs js/Error)
-                          #"Unknown fsm event"
+                          #"unknown event"
                           (impl/transition test-machine state :e-unknown)))
     ))
 
