@@ -547,6 +547,14 @@
     (find-least-common-compound-ancessor fsm source target)))
 
 (defn select-one-tx
+  "Given an atomic node and an event, find the first satistifed transition by
+  walking from the node and then its ancestors, until the root.
+
+  Return a two-tuple:
+  - The first element is the a boolean indicates whether any transition is found at
+    all (regarding it's satisfied or not)
+  - The second element is the found transition, if any.
+  "
   [fsm
    {:keys [path]
     :as node} state
@@ -558,21 +566,25 @@
                                      (when (or (not guard)
                                                (guard state input-event))
                                        (dissoc tx :guard)))
-                                   txs))]
-    (when-let [{:keys [source target]
-                :as tx}
-               (some (fn [{:keys [path] :as node}]
-                       (when-let [txs (seq (get-in node [:on type]))]
-                         (when-let [tx (first-satisfied-tx txs)]
-                           (assoc tx :source path))))
-                     (backtrack-ancestors-as-nodes fsm (:path node)))]
-      (let [target-resolved (when target
-                              (resolve-target source target))
-            tx (-> tx
-                   (assoc :target target-resolved)
-                   (assoc :external? (or (absolute-target? target)
-                                         (= target-resolved source))))]
-        (assoc tx :domain (get-tx-domain fsm tx))))))
+                                   txs))
+        found (volatile! false)
+        tx (when-let [{:keys [source target]
+                       :as tx}
+                      (some (fn [{:keys [path]
+                                  :as node}]
+                              (when-let [txs (seq (get-in node [:on type]))]
+                                (vreset! found true)
+                                (when-let [tx (first-satisfied-tx txs)]
+                                  (assoc tx :source path))))
+                            (backtrack-ancestors-as-nodes fsm (:path node)))]
+             (let [target-resolved (when target
+                                     (resolve-target source target))
+                   tx (-> tx
+                          (assoc :target target-resolved)
+                          (assoc :external? (or (absolute-target? target)
+                                                (= target-resolved source))))]
+               (assoc tx :domain (get-tx-domain fsm tx))))]
+    [@found tx]))
 
 (defn get-initial-path [{:keys [path initial] :as _node}]
   (let [initial (u/ensure-vector initial)
@@ -720,52 +732,62 @@
    ignore-unknown-event?]
   (let [configuration (_state->configuration fsm _state)
         atomic-nodes (filter #(= (:type %) :atomic) configuration)
-        _ (map :path configuration)
-        txs (map #(select-one-tx fsm % state event input-event) atomic-nodes)
-        exit-set (->> configuration
-                      ;; all active nodes that is covered by some tx domain should
-                      ;; exit itself.
-                      (filter (fn [{:keys [path]
-                                    :as node}]
-                                (some
-                                  (fn [{:keys [target domain external?]
-                                        :as tx}]
-                                    (cond
-                                      (= path [])
-                                      ;; only exit the root when the target is
-                                      ;; the root itself
-                                      (and external?
-                                           (= target []))
+        txs (->> atomic-nodes
+                 (map #(select-one-tx fsm % state event input-event)))
+        _ (when-not (->> txs
+                         (map first)
+                         (some identity))
+            (throw (ex-info (str "Unknown fsm event " (:type event))
+                            {:_state _state})))
+        txs (->> txs
+                 (map second)
+                 (remove nil?))]
+    (if (not (seq? txs))
+      [_state [] false]
+      (let [exit-set (->> configuration
+                          ;; all active nodes that is covered by some tx domain
+                          ;; should
+                          ;; exit itself.
+                          (filter (fn [{:keys [path]
+                                        :as node}]
+                                    (some
+                                      (fn [{:keys [target domain external?]
+                                            :as tx}]
+                                        (cond
+                                          (= path [])
+                                          ;; only exit the root when the target is
+                                          ;; the root itself
+                                          (and external?
+                                               (= target []))
 
-                                      (= domain path)
-                                      ;; only include the domain itself
-                                      ;; when it's an external transition
-                                      external?
+                                          (= domain path)
+                                          ;; only include the domain itself
+                                          ;; when it's an external transition
+                                          external?
 
-                                      :else
-                                      (is-prefix? domain path)))
-                                  txs)))
-                      (map :path)
-                      (into (sorted-set)))
-        entry-set (compute-entry-set fsm txs)
-        exit-actions (->> exit-set
-                          reverse
-                          (mapcat #(get-actions fsm % :exit)))
-        entry-actions (get-entry-actions fsm entry-set)
-        tx-actions (->> txs
-                        (mapcat :actions))
-        actions (concat exit-actions tx-actions entry-actions)
-        ;; _ #p exit-set
-        ;; _ #p entry-set
-        new-configuration (-> (->> (map :path configuration)
-                                   (into #{}))
-                              (clojure.set/difference exit-set)
-                              (clojure.set/union entry-set))
-        new-value (configuration->_state fsm new-configuration)]
-    [new-value actions
-     (has-eventless-transition? (map #(resolve-node fsm %)
-                                  entry-set))]
-  ))
+                                          :else
+                                          (is-prefix? domain path)))
+                                      txs)))
+                          (map :path)
+                          (into (sorted-set)))
+            entry-set (compute-entry-set fsm txs)
+            exit-actions (->> exit-set
+                              reverse
+                              (mapcat #(get-actions fsm % :exit)))
+            entry-actions (get-entry-actions fsm entry-set)
+            tx-actions (->> txs
+                            (mapcat :actions))
+            actions (concat exit-actions tx-actions entry-actions)
+            ;; _ #p exit-set
+            ;; _ #p entry-set
+            new-configuration (-> (->> (map :path configuration)
+                                       (into #{}))
+                                  (clojure.set/difference exit-set)
+                                  (clojure.set/union entry-set))
+            new-value (configuration->_state fsm new-configuration)]
+        [new-value actions
+         (has-eventless-transition? (map #(resolve-node fsm %)
+                                      entry-set))]))))
 
 (defn -do-init
   [fsm]

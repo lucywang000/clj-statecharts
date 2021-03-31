@@ -429,7 +429,7 @@
                 keyword)]
     {:id (kw :s) :entry [(kw :entry)] :exit [(kw :exit)]}))
 
-(deftest ^:focus test-verify-targets-when-creating-machine
+(deftest test-verify-targets-when-creating-machine
   (are [fsm re] (thrown-with-msg? #?(:clj Exception
                                      :cljs js/Error) re (impl/machine fsm))
     {:id :fsm
@@ -678,8 +678,7 @@
                        :p3.c {:p3c2 {:p3c2.a :p3c2.a1
                                      :p3c2.b :p3c2.b1}}}}))
         new-state (impl/transition test-machine state :e12)
-        new-state2 (impl/transition test-machine state :e331)
-        new-state3 (impl/transition test-machine new-state2 :e-331out)]
+        new-state3 (impl/transition test-machine state :e-331out)]
     (is (= new-state
            {:_state {:p3 {:p3.a :p3.a2
                           :p3.b :p3.b3
@@ -690,16 +689,10 @@
             :c 1
             :d 2
             :e 0}))
-    (is (= new-state2
-           {:_state {:p3 {:p3.a :p3.a1
-                          :p3.b :p3.b1
-                          :p3.c {:p3c2 {:p3c2.a :p3c2.a1
-                                        :p3c2.b :p3c2.b1}}}}
-            :a 0
-            :b 0
-            :c 0
-            :d 0
-            :e 0}))
+    (is (thrown-with-msg? #?(:clj Exception
+                             :cljs js/Error)
+                          #"Unknown fsm event"
+                          (impl/transition test-machine state :e331)))
     (is (= new-state3
            {:_state [:p2 :p23]
             :a 0
@@ -801,7 +794,7 @@
             [:p3 :p3.b :p3.b1]
             [:p3 :p3.c :p3c1]]))))
 
-(deftest test-non-root-parallel-states
+(deftest ^:focus1 test-non-root-parallel-states
   (let [test-machine non-root-parallel-states
         state (impl/initialize test-machine)
         _ (is (= (:_state state)
@@ -819,7 +812,12 @@
            [:s1 {:s1.1 {:pa :pa4
                         :pb :pb1}}]))
     (is (= (:_state new-state3) :s2))
-    (is (= (:_state new-state4) :s2))))
+    (is (= (:_state new-state4) :s2))
+    (is (thrown-with-msg? #?(:clj Exception
+                             :cljs js/Error)
+                          #"Unknown fsm event"
+                          (impl/transition test-machine state :e-unknown)))
+    ))
 
 (deftest test-non-root-parallel-states-tx-into
   (let [test-machine non-root-parallel-states
