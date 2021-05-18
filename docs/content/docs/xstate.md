@@ -20,6 +20,8 @@ title: "Difference from XState"
 * final states & done signals
 * history states
 
+These features may be implemented in the future.
+
 ## Different structure for the state map
 
 In xstate, the state object has two keys `value` and `context`
