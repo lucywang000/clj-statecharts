@@ -14,7 +14,7 @@ To specify a transition that shall happen automatically after some time, use the
                  :target :s2
                  :guard some-condition-fn
                  :actions some-action}
-                {:delay :2000
+                {:delay 2000
                  :target :s3
                  :actions some-action}]}}}
 ```
