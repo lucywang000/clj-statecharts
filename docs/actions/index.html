@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en" dir=>
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Actions &amp; Context #  Actions #  Actions are side-effects that are executed on state transitions.
+There are two kinds of actions:
+ Actions that are executed when a transition happens Actions that are executed when transition in (entry) or transition out (exit) of a state  Transition Actions #  Instead of define a transition target as simply a keyword, you need to use the full form:
+{:on {:some-event {:target :some-state :actions some-action}}} The actions value can also be a vector, and the actions would be executed one by one.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Actions &amp; Context" />
+<meta property="og:description" content="Actions &amp; Context #  Actions #  Actions are side-effects that are executed on state transitions.
+There are two kinds of actions:
+ Actions that are executed when a transition happens Actions that are executed when transition in (entry) or transition out (exit) of a state  Transition Actions #  Instead of define a transition target as simply a keyword, you need to use the full form:
+{:on {:some-event {:target :some-state :actions some-action}}} The actions value can also be a vector, and the actions would be executed one by one." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lucywang000.github.io/clj-statecharts/docs/actions/" />
+
+<title>Actions &amp; Context | clj-statecharts</title>
+<link rel="manifest" href="/clj-statecharts/manifest.json">
+<link rel="icon" href="/clj-statecharts/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/clj-statecharts/book.min.6cd8553a6854f4812343f0f0c8baca31271e686434f381fbe3c7226f66639176.css" integrity="sha256-bNhVOmhU9IEjQ/DwyLrKMSceaGQ084H748cib2ZjkXY=">
+<script defer src="/clj-statecharts/en.search.min.76bb5410c7b23374b230ec7a4c104f12eff93abf45a6cac9cee125f02e0791dc.js" integrity="sha256-drtUEMeyM3SyMOx6TBBPEu/5Or9FpsrJzuEl8C4Hkdw="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir=>
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      
+  <nav>
+<h2 class="book-brand">
+  <a href="/clj-statecharts"><span>clj-statecharts</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  <ul>
+<li><a href="/clj-statecharts/">Introduction</a></li>
+<li><a href="/clj-statecharts/docs/get-started/">Get Started</a></li>
+<li><a href="/clj-statecharts/docs/concepts/">Concepts: Machine, State, Service</a></li>
+<li><a href="/clj-statecharts/docs/actions/"class=active>Actions</a></li>
+<li><a href="/clj-statecharts/docs/transitions/">Transitions</a></li>
+<li><a href="/clj-statecharts/docs/hierarchical-states/">Hierarchical States</a></li>
+<li><a href="/clj-statecharts/docs/parallel-states/">Parallel States</a></li>
+<li><a href="/clj-statecharts/docs/identifying-states/">Identifying States</a></li>
+<li><a href="/clj-statecharts/docs/guards/">Guarded Transitions</a></li>
+<li><a href="/clj-statecharts/docs/delayed/">Delayed Transitions</a></li>
+<li>Integration
+<ul>
+<li><a href="/clj-statecharts/docs/integration/re-frame/">Re-frame integration</a></li>
+</ul>
+</li>
+<li>Internals
+<ul>
+<li><a href="/clj-statecharts/docs/xstate/">Difference from XState</a></li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script>
+
+
+ 
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/clj-statecharts/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Actions &amp; Context</strong>
+
+  <label for="toc-control">
+    
+    <img src="/clj-statecharts/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#actions">Actions</a>
+      <ul>
+        <li><a href="#transition-actions">Transition Actions</a></li>
+        <li><a href="#entryexit-actions">Entry/Exit Actions</a></li>
+        <li><a href="#method-signature-of-the-action-functions">Method Signature of the Action Functions</a></li>
+      </ul>
+    </li>
+    <li><a href="#updating-the-state-context">Updating the State Context</a></li>
+    <li><a href="#the-special-variable-_prev-state-in-action-functions">The Special Variable <code>_prev-state</code> in Action Functions</a></li>
+    <li><a href="#a-full-example">A Full Example</a></li>
+  </ul>
+</nav>
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="actions--context">
+  Actions &amp; Context
+  <a class="anchor" href="#actions--context">#</a>
+</h1>
+<h2 id="actions">
+  Actions
+  <a class="anchor" href="#actions">#</a>
+</h2>
+<p>Actions are side-effects that are executed on state transitions.</p>
+<p>There are two kinds of actions:</p>
+<ul>
+<li>Actions that are executed when a transition happens</li>
+<li>Actions that are executed when transition in (entry) or transition out (exit) of a state</li>
+</ul>
+<h3 id="transition-actions">
+  Transition Actions
+  <a class="anchor" href="#transition-actions">#</a>
+</h3>
+<p>Instead of define a transition target as simply a keyword, you need to use the full form:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:some-event</span> {<span style="color:#e6db74">:target</span> <span style="color:#e6db74">:some-state</span>
+                   <span style="color:#e6db74">:actions</span> some-action}}}
+</code></pre></div><p>The actions value can also be a vector, and the actions would be executed one by one.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:some-event</span> {<span style="color:#e6db74">:target</span> <span style="color:#e6db74">:some-state</span>
+                   <span style="color:#e6db74">:actions</span> [action1 action2]}}}
+</code></pre></div><h3 id="entryexit-actions">
+  Entry/Exit Actions
+  <a class="anchor" href="#entryexit-actions">#</a>
+</h3>
+<p>Entry actions are defined on a state, and are executed whenever this state is entered. Similar for exit actions - they are executed whenever leaving the state.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:states</span>
+ {<span style="color:#e6db74">:state1</span> {<span style="color:#e6db74">:entry</span> some-action-on-entry
+           <span style="color:#e6db74">:exit</span>  some-action-on-exit
+           <span style="color:#e6db74">:on</span>    {...}}}}
+
+<span style="color:#75715e">;; entry/exit can also be vector of actions</span>
+{<span style="color:#e6db74">:states</span>
+ {<span style="color:#e6db74">:state1</span> {<span style="color:#e6db74">:entry</span> [action1 action2]
+           <span style="color:#e6db74">:exit</span>  [action3 action4]
+           <span style="color:#e6db74">:on</span>    {...}}}}
+</code></pre></div><h3 id="method-signature-of-the-action-functions">
+  Method Signature of the Action Functions
+  <a class="anchor" href="#method-signature-of-the-action-functions">#</a>
+</h3>
+<p>The action function is invoked with two arguments: <code>(state event)</code></p>
+<ul>
+<li>state is the current state</li>
+<li>event is the event that triggers the transition and execution of the action</li>
+</ul>
+<h2 id="updating-the-state-context">
+  Updating the State Context
+  <a class="anchor" href="#updating-the-state-context">#</a>
+</h2>
+<p>Actions can update the context of the state machine.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#a6e22e">require</span> <span style="color:#f92672">&#39;</span>[statecharts.core <span style="color:#e6db74">:as</span> fsm <span style="color:#e6db74">:refer</span> [assign]])
+
+(<span style="color:#66d9ef">defn </span>update-counter [state event]
+  (<span style="color:#a6e22e">update</span> state <span style="color:#e6db74">:counter</span> inc))
+
+
+{<span style="color:#e6db74">:states</span>
+ {<span style="color:#e6db74">:state1</span> {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:some-event</span> {<span style="color:#e6db74">:target</span> <span style="color:#e6db74">:state2</span>
+                             <span style="color:#e6db74">:action</span> (<span style="color:#a6e22e">assign</span> update-counter)}}}}}
+</code></pre></div><p>Note the action is wrapped with <code>statecharts.core/assign</code>. Without this it&rsquo;s return value is ignored and the state context is not changed.</p>
+<p>The <code>event</code> arg of update-counter would be <code>{:type :some-event}</code>. Extra keys could be passed when calling <code>fsm/transition</code>:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">let </span>[event {<span style="color:#e6db74">:type</span> <span style="color:#e6db74">:some-event</span>
+             <span style="color:#e6db74">:k1</span> <span style="color:#e6db74">:v1</span>
+             <span style="color:#e6db74">:k1</span> <span style="color:#e6db74">:v2</span>}]
+  (<span style="color:#a6e22e">fsm/transition</span> machine current-state event))
+</code></pre></div><p>And the <code>event</code> argument passed to the <code>update-counter</code> would have these <code>:k1</code>
+<code>:k2</code> keys etc.</p>
+<h2 id="the-special-variable-_prev-state-in-action-functions">
+  The Special Variable <code>_prev-state</code> in Action Functions
+  <a class="anchor" href="#the-special-variable-_prev-state-in-action-functions">#</a>
+</h2>
+<p>During action execution time, <code>_state</code> already points to the new
+state after the transition.</p>
+<p>The action functions could use the value under the <code>_prev-state</code> key of the context
+to access the previous state before the transition (e.g. for debugging, or
+archiving some information for later analysis).</p>
+<p>Please note:</p>
+<ul>
+<li>Unlike <code>_state</code>, the <code>_prev-state</code> variable only exists during the transition and
+would not be available after that.</li>
+<li>If the transition is called with <code>{:exec false}</code>, the actions would be returned
+to the caller instead of being executed. In that case it would also have no
+access to <code>_prev-state</code>.</li>
+</ul>
+<h2 id="a-full-example">
+  A Full Example
+  <a class="anchor" href="#a-full-example">#</a>
+</h2>
+
+
+
+
+    
+    
+    
+    <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">ns </span>statecharts-samples.trigger-actions
+  (<span style="color:#e6db74">:require</span> [statecharts.core <span style="color:#e6db74">:as</span> fsm]))
+
+(<span style="color:#66d9ef">defn </span>fire-cameras [<span style="color:#f92672">&amp;</span> _]
+  (println <span style="color:#e6db74">&#34;Firing the traffic cameras!&#34;</span>))
+
+(<span style="color:#66d9ef">def </span>machine
+  (<span style="color:#a6e22e">fsm/machine</span>
+   {<span style="color:#e6db74">:id</span> <span style="color:#e6db74">:lights</span>
+    <span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:red</span>
+    <span style="color:#e6db74">:states</span>
+    {<span style="color:#e6db74">:green</span> {<span style="color:#e6db74">:on</span>
+             {<span style="color:#e6db74">:timer</span> <span style="color:#e6db74">:yellow</span>}}
+     <span style="color:#e6db74">:yellow</span> {<span style="color:#e6db74">:on</span>
+              {<span style="color:#e6db74">:timer</span> {<span style="color:#e6db74">:target</span> <span style="color:#e6db74">:red</span>
+                       <span style="color:#e6db74">:actions</span> fire-cameras}}}
+     <span style="color:#e6db74">:red</span> {<span style="color:#e6db74">:on</span>
+           {<span style="color:#e6db74">:timer</span> <span style="color:#e6db74">:green</span>}}}
+
+    <span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:power-outage</span> <span style="color:#e6db74">:red</span>}}))
+
+(<span style="color:#66d9ef">def </span>service (<span style="color:#a6e22e">fsm/service</span> machine))
+(<span style="color:#a6e22e">fsm/start</span> service)
+
+<span style="color:#75715e">;; :red =&gt; :green</span>
+(<span style="color:#a6e22e">fsm/send</span> service <span style="color:#e6db74">:timer</span>)
+<span style="color:#75715e">;; :green =&gt; yellow</span>
+(<span style="color:#a6e22e">fsm/send</span> service <span style="color:#e6db74">:timer</span>)
+<span style="color:#75715e">;; :yellow =&gt; :red</span>
+<span style="color:#75715e">;; fire-cameras would be called here</span>
+(<span style="color:#a6e22e">fsm/send</span> service <span style="color:#e6db74">:timer</span>)</code></pre></div>
+
+
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+  <div>
+    <a class="flex align-center" href="https://github.com/lucywang000/clj-statecharts/blob/master/docs/content//docs/actions.md" target="_blank" rel="noopener">
+      <img src="/clj-statecharts/svg/edit.svg" class="book-icon" alt="Edit" />
+      <span>Edit this page</span>
+    </a>
+  </div>
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#actions">Actions</a>
+      <ul>
+        <li><a href="#transition-actions">Transition Actions</a></li>
+        <li><a href="#entryexit-actions">Entry/Exit Actions</a></li>
+        <li><a href="#method-signature-of-the-action-functions">Method Signature of the Action Functions</a></li>
+      </ul>
+    </li>
+    <li><a href="#updating-the-state-context">Updating the State Context</a></li>
+    <li><a href="#the-special-variable-_prev-state-in-action-functions">The Special Variable <code>_prev-state</code> in Action Functions</a></li>
+    <li><a href="#a-full-example">A Full Example</a></li>
+  </ul>
+</nav>
+
+ 
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" dir=>
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Concepts: Machine, State, Service #  Machine &amp; State #   A machine is a specification of transitions, states, etc. It is immutable. A state is, well, a state. It represents the state of some system at some specific moment. It&rsquo;s also immutable.  How is the state different from the machine?
+ The machine is like a map. A map could indicate how one could go from one place to another.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Concepts: Machine, State, Service" />
+<meta property="og:description" content="Concepts: Machine, State, Service #  Machine &amp; State #   A machine is a specification of transitions, states, etc. It is immutable. A state is, well, a state. It represents the state of some system at some specific moment. It&rsquo;s also immutable.  How is the state different from the machine?
+ The machine is like a map. A map could indicate how one could go from one place to another." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lucywang000.github.io/clj-statecharts/docs/concepts/" />
+
+<title>Concepts: Machine, State, Service | clj-statecharts</title>
+<link rel="manifest" href="/clj-statecharts/manifest.json">
+<link rel="icon" href="/clj-statecharts/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/clj-statecharts/book.min.6cd8553a6854f4812343f0f0c8baca31271e686434f381fbe3c7226f66639176.css" integrity="sha256-bNhVOmhU9IEjQ/DwyLrKMSceaGQ084H748cib2ZjkXY=">
+<script defer src="/clj-statecharts/en.search.min.76bb5410c7b23374b230ec7a4c104f12eff93abf45a6cac9cee125f02e0791dc.js" integrity="sha256-drtUEMeyM3SyMOx6TBBPEu/5Or9FpsrJzuEl8C4Hkdw="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir=>
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      
+  <nav>
+<h2 class="book-brand">
+  <a href="/clj-statecharts"><span>clj-statecharts</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  <ul>
+<li><a href="/clj-statecharts/">Introduction</a></li>
+<li><a href="/clj-statecharts/docs/get-started/">Get Started</a></li>
+<li><a href="/clj-statecharts/docs/concepts/"class=active>Concepts: Machine, State, Service</a></li>
+<li><a href="/clj-statecharts/docs/actions/">Actions</a></li>
+<li><a href="/clj-statecharts/docs/transitions/">Transitions</a></li>
+<li><a href="/clj-statecharts/docs/hierarchical-states/">Hierarchical States</a></li>
+<li><a href="/clj-statecharts/docs/parallel-states/">Parallel States</a></li>
+<li><a href="/clj-statecharts/docs/identifying-states/">Identifying States</a></li>
+<li><a href="/clj-statecharts/docs/guards/">Guarded Transitions</a></li>
+<li><a href="/clj-statecharts/docs/delayed/">Delayed Transitions</a></li>
+<li>Integration
+<ul>
+<li><a href="/clj-statecharts/docs/integration/re-frame/">Re-frame integration</a></li>
+</ul>
+</li>
+<li>Internals
+<ul>
+<li><a href="/clj-statecharts/docs/xstate/">Difference from XState</a></li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script>
+
+
+ 
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/clj-statecharts/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Concepts: Machine, State, Service</strong>
+
+  <label for="toc-control">
+    
+    <img src="/clj-statecharts/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#machine--state">Machine &amp; State</a></li>
+    <li><a href="#the-state-map">The State Map</a></li>
+    <li><a href="#state--service">State &amp; Service</a></li>
+  </ul>
+</nav>
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="concepts-machine-state-service">
+  Concepts: Machine, State, Service
+  <a class="anchor" href="#concepts-machine-state-service">#</a>
+</h1>
+<h2 id="machine--state">
+  Machine &amp; State
+  <a class="anchor" href="#machine--state">#</a>
+</h2>
+<ul>
+<li>A <strong>machine</strong> is a specification of transitions, states, etc. It is immutable.</li>
+<li>A <strong>state</strong> is, well, a state. It represents the state of some system at some
+specific moment. It&rsquo;s also immutable.</li>
+</ul>
+<p>How is the state different from the machine?</p>
+<ul>
+<li>The machine is like a <strong>map</strong>. A map could indicate how one could go from one
+place to another. Likewise, a machine indicates how a system could transition
+from one state to another.</li>
+<li>The state is like a <strong>place</strong>.</li>
+</ul>
+<p>How is a machine like a map? The map itself is not in any place. It just
+contains all the directions. Similarly, the machine itself is not in any state.
+It just contains all the possible transitions.</p>
+<p>The state itself (mainly) contains two piece of information:</p>
+<ul>
+<li>the current state value, e.g. <code>:connecting</code>, or <code>[:connecting :handshake]</code>.
+(see <a href="/clj-statecharts/docs/hierarchical-states/">Hierarchical States</a> for how to
+represent hierarchical states).</li>
+<li>the current state context, e.g. number of seconds to back off before next
+connection attempt.</li>
+</ul>
+<h2 id="the-state-map">
+  The State Map
+  <a class="anchor" href="#the-state-map">#</a>
+</h2>
+<p>The current state is expressed as a map like this:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:_state</span>  <span style="color:#e6db74">:waiting</span>
+ <span style="color:#e6db74">:user</span>    <span style="color:#e6db74">:jack</span>
+ <span style="color:#e6db74">:backoff</span> <span style="color:#ae81ff">3000</span>}
+</code></pre></div><ul>
+<li>All keys that starts with an underscore (e.g. <code>_state</code>) is considered internal
+to clj-statecharts. Application code could read them, but should not modify
+them.</li>
+<li>All others keys are application-specific data, collectively called the
+&ldquo;<a href="https://en.wikipedia.org/wiki/UML_state_machine#Extended_states">context</a>&rdquo;
+of the state machine.</li>
+</ul>
+<h2 id="state--service">
+  State &amp; Service
+  <a class="anchor" href="#state--service">#</a>
+</h2>
+<p>How are machine/state connected to the higher level services?</p>
+<p>A service is stateful, and we need it for two reasons:</p>
+<ol>
+<li>We need a container of state to represent the state of system, which could
+transition over time. Actually it&rsquo;s just an atom in the state record.</li>
+<li>For <a href="/clj-statecharts/docs/delayed/">delayed transitions</a>, we need someone
+to keep track of these scheduling information. In its essence a delayed
+transition is just a timer:
+<ul>
+<li>the timer is scheduled when entering the state</li>
+<li>if the machine transitions out of the state before the timer is fired, the
+timer shall be canceled.</li>
+</ul>
+</li>
+</ol>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+  <div>
+    <a class="flex align-center" href="https://github.com/lucywang000/clj-statecharts/blob/master/docs/content//docs/concepts.md" target="_blank" rel="noopener">
+      <img src="/clj-statecharts/svg/edit.svg" class="book-icon" alt="Edit" />
+      <span>Edit this page</span>
+    </a>
+  </div>
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#machine--state">Machine &amp; State</a></li>
+    <li><a href="#the-state-map">The State Map</a></li>
+    <li><a href="#state--service">State &amp; Service</a></li>
+  </ul>
+</nav>
+
+ 
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

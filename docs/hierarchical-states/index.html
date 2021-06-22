@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" dir=>
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Hierarchical States #  (a.k.a compound states or nested states)
+About Hierarchical States (a.k.a Compound States) #  One of the greatest power of statecharts is that it could prevent the &ldquo;states explosion&rdquo; problem of a tradition finite state machine. The power comes from the concept of &ldquo;compound states&rdquo; in statecharts:
+ A state can define its sub-states, a.k.a child states If a state doesn&rsquo;t handle an event, its parent would handle it (if it can).">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Hierarchical States" />
+<meta property="og:description" content="Hierarchical States #  (a.k.a compound states or nested states)
+About Hierarchical States (a.k.a Compound States) #  One of the greatest power of statecharts is that it could prevent the &ldquo;states explosion&rdquo; problem of a tradition finite state machine. The power comes from the concept of &ldquo;compound states&rdquo; in statecharts:
+ A state can define its sub-states, a.k.a child states If a state doesn&rsquo;t handle an event, its parent would handle it (if it can)." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lucywang000.github.io/clj-statecharts/docs/hierarchical-states/" />
+
+<title>Hierarchical States | clj-statecharts</title>
+<link rel="manifest" href="/clj-statecharts/manifest.json">
+<link rel="icon" href="/clj-statecharts/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/clj-statecharts/book.min.6cd8553a6854f4812343f0f0c8baca31271e686434f381fbe3c7226f66639176.css" integrity="sha256-bNhVOmhU9IEjQ/DwyLrKMSceaGQ084H748cib2ZjkXY=">
+<script defer src="/clj-statecharts/en.search.min.76bb5410c7b23374b230ec7a4c104f12eff93abf45a6cac9cee125f02e0791dc.js" integrity="sha256-drtUEMeyM3SyMOx6TBBPEu/5Or9FpsrJzuEl8C4Hkdw="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir=>
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      
+  <nav>
+<h2 class="book-brand">
+  <a href="/clj-statecharts"><span>clj-statecharts</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  <ul>
+<li><a href="/clj-statecharts/">Introduction</a></li>
+<li><a href="/clj-statecharts/docs/get-started/">Get Started</a></li>
+<li><a href="/clj-statecharts/docs/concepts/">Concepts: Machine, State, Service</a></li>
+<li><a href="/clj-statecharts/docs/actions/">Actions</a></li>
+<li><a href="/clj-statecharts/docs/transitions/">Transitions</a></li>
+<li><a href="/clj-statecharts/docs/hierarchical-states/"class=active>Hierarchical States</a></li>
+<li><a href="/clj-statecharts/docs/parallel-states/">Parallel States</a></li>
+<li><a href="/clj-statecharts/docs/identifying-states/">Identifying States</a></li>
+<li><a href="/clj-statecharts/docs/guards/">Guarded Transitions</a></li>
+<li><a href="/clj-statecharts/docs/delayed/">Delayed Transitions</a></li>
+<li>Integration
+<ul>
+<li><a href="/clj-statecharts/docs/integration/re-frame/">Re-frame integration</a></li>
+</ul>
+</li>
+<li>Internals
+<ul>
+<li><a href="/clj-statecharts/docs/xstate/">Difference from XState</a></li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script>
+
+
+ 
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/clj-statecharts/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Hierarchical States</strong>
+
+  <label for="toc-control">
+    
+    <img src="/clj-statecharts/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#about-hierarchical-states-aka-compound-states">About Hierarchical States (a.k.a Compound States)</a></li>
+  </ul>
+</nav>
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="hierarchical-states">
+  Hierarchical States
+  <a class="anchor" href="#hierarchical-states">#</a>
+</h1>
+<p>(a.k.a compound states or nested states)</p>
+<h2 id="about-hierarchical-states-aka-compound-states">
+  About Hierarchical States (a.k.a Compound States)
+  <a class="anchor" href="#about-hierarchical-states-aka-compound-states">#</a>
+</h2>
+<p>One of the greatest power of statecharts is that it could prevent the
+&ldquo;states explosion&rdquo; problem of a tradition finite state machine. The power
+comes from the concept of &ldquo;compound states&rdquo; in statecharts:</p>
+<ul>
+<li>A state can define its sub-states, a.k.a child states</li>
+<li>If a state doesn&rsquo;t handle an event, its parent would handle it (if it can).</li>
+</ul>
+<p>In this sense a statecharts is a tree, and the event is handled by
+searching from the current node up to the root, until whichever node
+is found to have specified a handler for this event.</p>
+<p><em>Here is <a href="https://statecharts.github.io/glossary/compound-state.html">a more in-depth concept explanation in the StateCharts
+101</a>.</em></p>
+<p>For example a state machine for a calculator could have a &ldquo;clear
+screen&rdquo; event that is only handled by the root node.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:id</span> <span style="color:#e6db74">:calculator</span>
+ <span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:clear-screen</span> {<span style="color:#e6db74">:target</span>  <span style="color:#e6db74">:operand1</span>
+                     <span style="color:#e6db74">:actions</span> (<span style="color:#a6e22e">assign</span> reset-inputs)}}
+ {<span style="color:#e6db74">:states</span>
+  {<span style="color:#e6db74">:operand1</span> {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:input-digit</span>    <span style="color:#e6db74">:operand1</span>
+                   <span style="color:#e6db74">:input-operator</span> <span style="color:#e6db74">:operator</span>}}
+
+   <span style="color:#e6db74">:operator</span> {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:input-operator</span> <span style="color:#e6db74">:operand2</span>}}
+
+   <span style="color:#e6db74">:operand2</span> {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:input-digit</span> <span style="color:#e6db74">:operand2</span>
+                   <span style="color:#e6db74">:equals</span>      <span style="color:#e6db74">:result</span>}}}}}
+</code></pre></div><p>In a traditional finite state machine, all states would have to handle this event by themselves.</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+  <div>
+    <a class="flex align-center" href="https://github.com/lucywang000/clj-statecharts/blob/master/docs/content//docs/hierarchical-states.md" target="_blank" rel="noopener">
+      <img src="/clj-statecharts/svg/edit.svg" class="book-icon" alt="Edit" />
+      <span>Edit this page</span>
+    </a>
+  </div>
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#about-hierarchical-states-aka-compound-states">About Hierarchical States (a.k.a Compound States)</a></li>
+  </ul>
+</nav>
+
+ 
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

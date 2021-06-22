@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en" dir=>
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Re-frame Integration #  First, re-frame itself is much like a simple state machine: an event triggers the change of the app-db (much like the context in statecharts), as well as execution of other effects (much like actions in a fsm/statecharts).
+There are two ways to integrate clj-statecharts with re-frame:
+ Integrate re-frame with the immutable api Or integrate with the service api  The statecharts.re-frame namespace provides some goodies for both ways of integration.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Re-frame Integration" />
+<meta property="og:description" content="Re-frame Integration #  First, re-frame itself is much like a simple state machine: an event triggers the change of the app-db (much like the context in statecharts), as well as execution of other effects (much like actions in a fsm/statecharts).
+There are two ways to integrate clj-statecharts with re-frame:
+ Integrate re-frame with the immutable api Or integrate with the service api  The statecharts.re-frame namespace provides some goodies for both ways of integration." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lucywang000.github.io/clj-statecharts/docs/integration/re-frame/" />
+
+<title>Re-frame Integration | clj-statecharts</title>
+<link rel="manifest" href="/clj-statecharts/manifest.json">
+<link rel="icon" href="/clj-statecharts/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/clj-statecharts/book.min.6cd8553a6854f4812343f0f0c8baca31271e686434f381fbe3c7226f66639176.css" integrity="sha256-bNhVOmhU9IEjQ/DwyLrKMSceaGQ084H748cib2ZjkXY=">
+<script defer src="/clj-statecharts/en.search.min.76bb5410c7b23374b230ec7a4c104f12eff93abf45a6cac9cee125f02e0791dc.js" integrity="sha256-drtUEMeyM3SyMOx6TBBPEu/5Or9FpsrJzuEl8C4Hkdw="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir=>
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      
+  <nav>
+<h2 class="book-brand">
+  <a href="/clj-statecharts"><span>clj-statecharts</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  <ul>
+<li><a href="/clj-statecharts/">Introduction</a></li>
+<li><a href="/clj-statecharts/docs/get-started/">Get Started</a></li>
+<li><a href="/clj-statecharts/docs/concepts/">Concepts: Machine, State, Service</a></li>
+<li><a href="/clj-statecharts/docs/actions/">Actions</a></li>
+<li><a href="/clj-statecharts/docs/transitions/">Transitions</a></li>
+<li><a href="/clj-statecharts/docs/hierarchical-states/">Hierarchical States</a></li>
+<li><a href="/clj-statecharts/docs/parallel-states/">Parallel States</a></li>
+<li><a href="/clj-statecharts/docs/identifying-states/">Identifying States</a></li>
+<li><a href="/clj-statecharts/docs/guards/">Guarded Transitions</a></li>
+<li><a href="/clj-statecharts/docs/delayed/">Delayed Transitions</a></li>
+<li>Integration
+<ul>
+<li><a href="/clj-statecharts/docs/integration/re-frame/"class=active>Re-frame integration</a></li>
+</ul>
+</li>
+<li>Internals
+<ul>
+<li><a href="/clj-statecharts/docs/xstate/">Difference from XState</a></li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script>
+
+
+ 
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/clj-statecharts/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Re-frame Integration</strong>
+
+  <label for="toc-control">
+    
+    <img src="/clj-statecharts/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#integrate-re-frame-with-the-immutable-api">Integrate re-frame with the Immutable API</a>
+      <ul>
+        <li><a href="#discard-stale-events-with-epoch-support">Discard stale events with epoch support</a></li>
+      </ul>
+    </li>
+    <li><a href="#integrate-with-the-service-api">Integrate with the Service API</a></li>
+    <li><a href="#immutable-or-service">Immutable or Service?</a></li>
+    <li><a href="#further-reading">Further Reading</a></li>
+  </ul>
+</nav>
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="re-frame-integration">
+  Re-frame Integration
+  <a class="anchor" href="#re-frame-integration">#</a>
+</h1>
+<p>First, re-frame itself is much like a simple state machine: an event triggers
+the change of the app-db (much like the <code>context</code> in statecharts), as
+well as execution of other effects (much like actions in a
+fsm/statecharts).</p>
+<p>There are two ways to integrate clj-statecharts with re-frame:</p>
+<ul>
+<li>Integrate re-frame with the immutable api</li>
+<li>Or integrate with the service api</li>
+</ul>
+<p>The <code>statecharts.re-frame</code> namespace provides some goodies for
+both ways of integration.</p>
+<h2 id="integrate-re-frame-with-the-immutable-api">
+  Integrate re-frame with the Immutable API
+  <a class="anchor" href="#integrate-re-frame-with-the-immutable-api">#</a>
+</h2>
+<p>It&rsquo;s pretty straight forward to integrate the immutable API of
+statecharts into re-frame&rsquo;s event handlers:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">ns </span>mymodule
+  (<span style="color:#e6db74">:require</span> [re-frame.core <span style="color:#e6db74">:as</span> rf]
+            [statecharts.core <span style="color:#e6db74">:as</span> fsm]
+            [statecharts.integrations.re-frame <span style="color:#e6db74">:as</span> fsm.rf]))
+
+(<span style="color:#66d9ef">def </span>mymodule-path [(<span style="color:#a6e22e">rf/path</span> <span style="color:#e6db74">:mymodule</span>)])
+
+(<span style="color:#66d9ef">def </span>my-machine
+  (-&gt; (<span style="color:#a6e22e">fsm/machine</span>
+       {<span style="color:#e6db74">:id</span> <span style="color:#e6db74">:mymodule</span>
+        <span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:init</span>
+        <span style="color:#e6db74">:states</span> {...}
+        <span style="color:#e6db74">:integrations</span> {<span style="color:#e6db74">:re-frame</span> {<span style="color:#e6db74">:path</span> mymodule-path               <span style="color:#75715e">;; (1)</span>
+                                  <span style="color:#e6db74">:initialize-event</span> <span style="color:#e6db74">:mymodule/init</span>
+                                  <span style="color:#e6db74">:transition-event</span> <span style="color:#e6db74">:mymodule/fsm-transition</span>}}})
+      (<span style="color:#a6e22e">fsm.rf/integrate</span>)                                            <span style="color:#75715e">;; (2)</span>
+      ))
+</code></pre></div><p>The tricky part is to how to use the event system of re-frame to transition the state machine. This is done by <code>fsm.rf/integrate</code>.</p>
+<p>The call to <code>fsm.rf/integrate</code> would do the following for you:</p>
+<ul>
+<li>register an re-frame event handler for <code>:mymodule/init</code> that calls
+<code>fsm/initialize</code> and store the resulting state in the given path (i.e.
+<code>mymodule-path</code> in the this example)</li>
+<li>register an re-frame event handler <code>:mymodule/fsm-transition</code>, that when
+triggered, simply calls <code>fsm/transition</code> with the event args.</li>
+</ul>
+<p>Here is an example of loading the list of friends of current user:</p>
+
+
+
+
+    
+    
+    
+    <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">ns </span>statecharts-samples.rf-integration
+  (<span style="color:#e6db74">:require</span> [re-frame.core <span style="color:#e6db74">:as</span> rf]
+            [statecharts.core <span style="color:#e6db74">:as</span> fsm <span style="color:#e6db74">:refer</span> [assign]]
+            [statecharts.integrations.re-frame <span style="color:#e6db74">:as</span> fsm.rf]))
+
+(<span style="color:#66d9ef">def </span>friends-path [(<span style="color:#a6e22e">rf/path</span> <span style="color:#e6db74">:friends</span>)])
+
+(<span style="color:#66d9ef">def </span>load-friends
+  (<span style="color:#a6e22e">fsm.rf/call-fx</span>
+   {<span style="color:#e6db74">:http-xhrio</span>
+    {<span style="color:#e6db74">:uri</span> <span style="color:#e6db74">&#34;/api/get-friends.json&#34;</span>
+     <span style="color:#e6db74">:method</span> <span style="color:#e6db74">:get</span>
+     <span style="color:#e6db74">:on-failure</span> [<span style="color:#e6db74">:friends/fsm-event</span> <span style="color:#e6db74">:fail-load</span>]
+     <span style="color:#e6db74">:on-success</span> [<span style="color:#e6db74">:friends/fsm-event</span> <span style="color:#e6db74">:success-load</span>]}}))
+
+(<span style="color:#66d9ef">defn </span>on-friends-loaded [state {<span style="color:#e6db74">:keys</span> [data]}]
+  (assoc state <span style="color:#e6db74">:friends</span> (<span style="color:#e6db74">:friends</span> data)))
+
+(<span style="color:#66d9ef">defn </span>on-friends-load-failed [state {<span style="color:#e6db74">:keys</span> [data]}]
+  (assoc state <span style="color:#e6db74">:error</span> (<span style="color:#e6db74">:status</span> data)))
+
+(<span style="color:#66d9ef">def </span>friends-machine
+  (<span style="color:#a6e22e">fsm/machine</span>
+   {<span style="color:#e6db74">:id</span>      <span style="color:#e6db74">:friends</span>
+    <span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:loading</span>
+    <span style="color:#e6db74">:integrations</span> {<span style="color:#e6db74">:re-frame</span> {<span style="color:#e6db74">:path</span> friends-path
+                              <span style="color:#e6db74">:initialize-event</span> <span style="color:#e6db74">:friends/init</span>
+                              <span style="color:#e6db74">:transition-event</span> <span style="color:#e6db74">:friends/fsm-event</span>}}
+    <span style="color:#e6db74">:states</span>
+    {<span style="color:#e6db74">:loading</span>     {<span style="color:#e6db74">:entry</span> load-friends
+                   <span style="color:#e6db74">:on</span>    {<span style="color:#e6db74">:success-load</span> {<span style="color:#e6db74">:actions</span> (<span style="color:#a6e22e">assign</span> on-friends-loaded)
+                                          <span style="color:#e6db74">:target</span>  <span style="color:#e6db74">:loaded</span>}
+                           <span style="color:#e6db74">:fail-load</span>    {<span style="color:#e6db74">:actions</span> (<span style="color:#a6e22e">assign</span> on-friends-load-failed)
+                                          <span style="color:#e6db74">:target</span>  <span style="color:#e6db74">:load-failed</span>}}}
+     <span style="color:#e6db74">:loaded</span>      {}
+     <span style="color:#e6db74">:load-failed</span> {}}}))</code></pre></div>
+
+
+<p>Notice the use of <code>statecharts.integrations.re-frame/call-fx</code> to dispatch an effect
+in a fsm action.</p>
+<h3 id="discard-stale-events-with-epoch-support">
+  Discard stale events with epoch support
+  <a class="anchor" href="#discard-stale-events-with-epoch-support">#</a>
+</h3>
+<p>Under the <code>[:integrations :re-frame]</code> key, you can specify an <code>epoch?</code> boolean
+flag. To see why you may need it, first let&rsquo;s see a real world problem.</p>
+<p>Imagine there is a image viewing application which users could click one image from
+a list of thumbnails, and the application would download and show the original
+high-quality image. Also imagine the download/show is managed by a state machine,
+so there are states like <code>loading</code>, <code>loaded</code>, <code>load-failed</code>, and events like
+<code>:load-image</code>, <code>:success-load</code>, <code>:fail-load</code> etc. For instance, upon successful
+download the image with an ajax request, the <code>:success-load</code> event would be fired,
+and the machine would enter <code>:loaded</code> state. The UI would then display the image.</p>
+<p>One problem arises when the user clicks too quickly, for instance, after clicking
+on image A, and quickly on image B. It&rsquo;s possible that upon successful downloading
+of image A, the <code>:success-load</code> fires and the UI displays the image A, but the user
+wants to see image B. (Eventually image B would be displayed, but this &ldquo;flaky&rdquo;
+experience may annoy users.)</p>
+<p>One way is to always cancel the current ajax request when requesting for a new one.
+But sometimes it maybe not feasible to do so. So clj-statecharts provides an
+<code>epoch?</code> flag in this re-frame integration for such uses cases.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(-&gt; (<span style="color:#a6e22e">fsm/machine</span>
+     {<span style="color:#e6db74">:id</span> <span style="color:#e6db74">:image-viewer</span>
+      <span style="color:#e6db74">:states</span> {...}
+      <span style="color:#e6db74">:integrations</span> {<span style="color:#e6db74">:re-frame</span> {<span style="color:#e6db74">:transition-event</span> <span style="color:#e6db74">:viewer/fsm-event</span>
+                                <span style="color:#e6db74">:epoch?</span> true <span style="color:#75715e">;; (1)</span>
+                                ...}}})
+    (<span style="color:#a6e22e">fsm.rf/integrate</span>))
+</code></pre></div><p>This <code>epoch?</code> flag would add some extra features to the state:</p>
+<ul>
+<li>Upon the initialize event, the state map would have an <code>_epoch</code> key populated by
+default, whose value is an integer. Later if you re-initialize the machine, the
+<code>_epoch</code> key would be automatically incremented by 1.</li>
+<li>When you dispatch an event to the fsm, typically in a callback function of some
+async operations like sending an ajax request, you can dispatch a keyword, or a
+map with an <code>:type</code> key (actually <code>:event-foo</code> is short for <code>{:type :event-foo}</code>.
+In this map you can pass an <code>:epoch</code> key, which could serve the purpose to
+automatically discard this event in the <code>:_epoch</code> of the state machine changes.</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#a6e22e">ajax/send</span>
+  {<span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;http://image.com/imageA&#34;</span>
+   <span style="color:#75715e">;; this event is always accepted</span>
+   <span style="color:#e6db74">:callback</span> <span style="color:#f92672">#</span>(<span style="color:#a6e22e">rf/dispatch</span> [<span style="color:#e6db74">:viewer/fsm-event</span> <span style="color:#e6db74">:success-load</span> %])})
+
+(<span style="color:#a6e22e">ajax/send</span>
+  {<span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;http://image.com/imageA&#34;</span>
+  <span style="color:#75715e">;; For this event, when the callback is called, if the provided</span>
+  <span style="color:#75715e">;; epoch is not the same as the state&#39;s current _epoch value, the</span>
+  <span style="color:#75715e">;; event would be ignored.</span>
+  <span style="color:#e6db74">:callback</span> <span style="color:#f92672">#</span>(<span style="color:#a6e22e">rf/dispatch</span> [<span style="color:#e6db74">:viewer/fsm-event</span> {<span style="color:#e6db74">:type</span> <span style="color:#e6db74">:success-load</span> <span style="color:#e6db74">:epoch</span> <span style="color:#ae81ff">1</span>} %])})
+</code></pre></div><h2 id="integrate-with-the-service-api">
+  Integrate with the Service API
+  <a class="anchor" href="#integrate-with-the-service-api">#</a>
+</h2>
+<p>When integrating re-frame with the service api of clj-statecharts, the
+state is stored in the service, and is synced to re-frame app-db by
+calling to <code>statecharts.integrations.re-frame/connect-rf-db</code>.</p>
+
+
+
+
+    
+    
+    
+    <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">ns </span>statecharts-samples.rf-integration-service
+  (<span style="color:#e6db74">:require</span> [statecharts.core <span style="color:#e6db74">:as</span> fsm <span style="color:#e6db74">:refer</span> [assign]]
+            [re-frame.core <span style="color:#e6db74">:as</span> rf]
+            [statecharts.integrations.re-frame <span style="color:#e6db74">:as</span> fsm.rf]))
+
+(<span style="color:#66d9ef">def </span>friends-path [(<span style="color:#a6e22e">rf/path</span> <span style="color:#e6db74">:friends</span>)])
+
+(<span style="color:#66d9ef">declare </span>friends-service)
+
+(<span style="color:#a6e22e">rf/reg-event-fx</span>
+ <span style="color:#e6db74">:friends/init</span>
+ (<span style="color:#66d9ef">fn </span>[]
+   (<span style="color:#a6e22e">fsm/start</span> friends-service)          <span style="color:#75715e">;; (1)</span>
+   nil))
+
+(<span style="color:#66d9ef">defn </span>load-friends []
+  (<span style="color:#a6e22e">send-http-request</span>
+   {<span style="color:#e6db74">:uri</span> <span style="color:#e6db74">&#34;/api/get-friends.json&#34;</span>
+    <span style="color:#e6db74">:method</span> <span style="color:#e6db74">:get</span>
+    <span style="color:#e6db74">:on-success</span> <span style="color:#f92672">#</span>(<span style="color:#a6e22e">fsm/send</span> friends-service {<span style="color:#e6db74">:type</span> <span style="color:#e6db74">:success-load</span> <span style="color:#e6db74">:data</span> %})
+    <span style="color:#e6db74">:on-failure</span> <span style="color:#f92672">#</span>(<span style="color:#a6e22e">fsm/send</span> friends-service {<span style="color:#e6db74">:type</span> <span style="color:#e6db74">:fail-load</span> <span style="color:#e6db74">:data</span> %})}))
+
+(<span style="color:#66d9ef">defn </span>on-friends-loaded [state {<span style="color:#e6db74">:keys</span> [data]}]
+  (assoc state <span style="color:#e6db74">:friends</span> (<span style="color:#e6db74">:friends</span> data)))
+
+(<span style="color:#66d9ef">defn </span>on-friends-load-failed [state {<span style="color:#e6db74">:keys</span> [data]}]
+  (assoc state <span style="color:#e6db74">:error</span> (<span style="color:#e6db74">:status</span> data)))
+
+(<span style="color:#66d9ef">def </span>friends-machine
+  (<span style="color:#a6e22e">fsm/machine</span>
+   {<span style="color:#e6db74">:id</span>      <span style="color:#e6db74">:friends</span>
+    <span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:loading</span>
+    <span style="color:#e6db74">:states</span>
+    {<span style="color:#e6db74">:loading</span>     {<span style="color:#e6db74">:entry</span> load-friends
+                   <span style="color:#e6db74">:on</span>    {<span style="color:#e6db74">:success-load</span> {<span style="color:#e6db74">:actions</span> (<span style="color:#a6e22e">assign</span> on-friends-loaded)
+                                          <span style="color:#e6db74">:target</span>  <span style="color:#e6db74">:loaded</span>}
+                           <span style="color:#e6db74">:fail-load</span>    {<span style="color:#e6db74">:actions</span> (<span style="color:#a6e22e">assign</span> on-friends-load-failed)
+                                          <span style="color:#e6db74">:target</span>  <span style="color:#e6db74">:load-failed</span>}}}
+     <span style="color:#e6db74">:loaded</span>      {}
+     <span style="color:#e6db74">:load-failed</span> {}}}))
+
+(<span style="color:#66d9ef">defonce </span>friends-service (<span style="color:#a6e22e">fsm/service</span> friends-machine))
+
+(<span style="color:#a6e22e">fsm.rf/connect-rf-db</span> friends-service [<span style="color:#e6db74">:friends</span>]) <span style="color:#75715e">;; (2)</span>
+
+(<span style="color:#66d9ef">defn </span><span style="color:#f92672">^</span><span style="color:#e6db74">:dev/after-load</span> after-reload []
+  (<span style="color:#a6e22e">fsm/reload</span> friends-service friends-machine)) <span style="color:#75715e">;; (3)</span></code></pre></div>
+
+
+<p>(1) call <code>fsm/start</code> on the service in some event handler</p>
+<p>(2) sync the state machine context to some sub key of re-frame app-db
+with <code>statecharts.integrations.re-frame/connect-rf-db</code></p>
+<p>(3) Make sure the service keeps a reference to the latest machine
+definition after hot-reloading.</p>
+<p>Be aware that state is updated into the app-db path in a &ldquo;unidirectional&rdquo; sense. If
+you update the app-db data (for instance modify the <code>:friends</code> key in the above
+example), it would not affect the state machine and would be overwritten by the
+next state machine update.</p>
+<h2 id="immutable-or-service">
+  Immutable or Service?
+  <a class="anchor" href="#immutable-or-service">#</a>
+</h2>
+<p>Integrate with the immutable API when:</p>
+<ul>
+<li>The state machine states changes are mostly driven by UI/re-frame events (e.g.
+button clicks)</li>
+<li>You need to modify the state directly in other re-frame events</li>
+</ul>
+<p>Integrate with the service API when:</p>
+<ul>
+<li>The state changes are mostly driven by non UI/re-frame events (e.g. websocket
+states management)</li>
+</ul>
+<h2 id="further-reading">
+  Further Reading
+  <a class="anchor" href="#further-reading">#</a>
+</h2>
+<ul>
+<li><a href="https://github.com/day8/re-frame/blob/v1.1.0/docs/EPs/005-StateMachines.md">Re-frame EP 003 - Finite State Machines</a></li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+  <div>
+    <a class="flex align-center" href="https://github.com/lucywang000/clj-statecharts/blob/master/docs/content//docs/integration/re-frame.md" target="_blank" rel="noopener">
+      <img src="/clj-statecharts/svg/edit.svg" class="book-icon" alt="Edit" />
+      <span>Edit this page</span>
+    </a>
+  </div>
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#integrate-re-frame-with-the-immutable-api">Integrate re-frame with the Immutable API</a>
+      <ul>
+        <li><a href="#discard-stale-events-with-epoch-support">Discard stale events with epoch support</a></li>
+      </ul>
+    </li>
+    <li><a href="#integrate-with-the-service-api">Integrate with the Service API</a></li>
+    <li><a href="#immutable-or-service">Immutable or Service?</a></li>
+    <li><a href="#further-reading">Further Reading</a></li>
+  </ul>
+</nav>
+
+ 
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

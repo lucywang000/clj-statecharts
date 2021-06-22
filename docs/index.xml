@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Docs on clj-statecharts</title>
+    <link>https://lucywang000.github.io/clj-statecharts/docs/</link>
+    <description>Recent content in Docs on clj-statecharts</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://lucywang000.github.io/clj-statecharts/docs/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Actions &amp; Context</title>
+      <link>https://lucywang000.github.io/clj-statecharts/docs/actions/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lucywang000.github.io/clj-statecharts/docs/actions/</guid>
+      <description>Actions &amp;amp; Context #  Actions #  Actions are side-effects that are executed on state transitions.
+There are two kinds of actions:
+ Actions that are executed when a transition happens Actions that are executed when transition in (entry) or transition out (exit) of a state  Transition Actions #  Instead of define a transition target as simply a keyword, you need to use the full form:
+{:on {:some-event {:target :some-state :actions some-action}}} The actions value can also be a vector, and the actions would be executed one by one.</description>
+    </item>
+    
+    <item>
+      <title>Concepts: Machine, State, Service</title>
+      <link>https://lucywang000.github.io/clj-statecharts/docs/concepts/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lucywang000.github.io/clj-statecharts/docs/concepts/</guid>
+      <description>Concepts: Machine, State, Service #  Machine &amp;amp; State #   A machine is a specification of transitions, states, etc. It is immutable. A state is, well, a state. It represents the state of some system at some specific moment. It&amp;rsquo;s also immutable.  How is the state different from the machine?
+ The machine is like a map. A map could indicate how one could go from one place to another.</description>
+    </item>
+    
+    <item>
+      <title>Delayed Transitions</title>
+      <link>https://lucywang000.github.io/clj-statecharts/docs/delayed/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lucywang000.github.io/clj-statecharts/docs/delayed/</guid>
+      <description>Delayed Transitions #  Basic Delayed Transitions #  To specify a transition that shall happen automatically after some time, use the :after keyword:
+{:states {:s1 {:after [{:delay 1000 :target :s2 :guard some-condition-fn :actions some-action} {:delay 2000 :target :s3 :actions some-action}]}}} All transition features like guards and actions could be used here, as you can see in the code snippet above.
+Dynamic Delay #  The amount of delay could be expressed as a context function.</description>
+    </item>
+    
+    <item>
+      <title>Difference from XState</title>
+      <link>https://lucywang000.github.io/clj-statecharts/docs/xstate/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lucywang000.github.io/clj-statecharts/docs/xstate/</guid>
+      <description>Difference from XState #  Why not use XState in CLJS? #   In XState the context can only be a plain js map. One can not use cljs objects (map/vector) as context, because xstate doesn&amp;rsquo;t preserve the context object&amp;rsquo;s prototype, because it uses Object.assign when updating the context. For a CLJS project, xstate may be good enough, but we still need a solution for CLJ projects. Last but not least, xstate uses strings to represent states everywhere, but in clj/cljs we tend to use keywords instead.</description>
+    </item>
+    
+    <item>
+      <title>Get Started</title>
+      <link>https://lucywang000.github.io/clj-statecharts/docs/get-started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lucywang000.github.io/clj-statecharts/docs/get-started/</guid>
+      <description>Get Started #  Installation #  Add the dep to to your project.clj/deps.edn/shadow-cljs.edn: 
+The below document assumes you have a require statement like this:
+(require &amp;#39;[statecharts.core :as fsm]) Two layers of APIs #  There are two layers of APIs in clj-statecharts:
+ The Immutable API that deals with machines and states directly. This layer is purely functional. The Service API are the higher level one. It is built on top of the immutable API, stateful and easier to get started.</description>
+    </item>
+    
+    <item>
+      <title>Guarded Transitions</title>
+      <link>https://lucywang000.github.io/clj-statecharts/docs/guards/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lucywang000.github.io/clj-statecharts/docs/guards/</guid>
+      <description>Guarded Transitions #  Use Guarded Transitions #  Also called &amp;ldquo;conditional transitions&amp;rdquo;.
+When an event happens, the target state may depend on some condition.
+To express this, add a :guard key in the transition map.
+ The first transition that has is condition met is selected. If none is selected, the event is ignored.  (defn my-condition-fn [state event] ;; returns a boolean ) ;; Part of the machine definition {:states {:s1 {:on {:some-event [{:target :s2 :guard my-condition-fn :actions some-action} {:target :s3}]}}}} If my-condition-fn returns true, then the target is :s2.</description>
+    </item>
+    
+    <item>
+      <title>Hierarchical States</title>
+      <link>https://lucywang000.github.io/clj-statecharts/docs/hierarchical-states/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lucywang000.github.io/clj-statecharts/docs/hierarchical-states/</guid>
+      <description>Hierarchical States #  (a.k.a compound states or nested states)
+About Hierarchical States (a.k.a Compound States) #  One of the greatest power of statecharts is that it could prevent the &amp;ldquo;states explosion&amp;rdquo; problem of a tradition finite state machine. The power comes from the concept of &amp;ldquo;compound states&amp;rdquo; in statecharts:
+ A state can define its sub-states, a.k.a child states If a state doesn&amp;rsquo;t handle an event, its parent would handle it (if it can).</description>
+    </item>
+    
+    <item>
+      <title>Identifying States</title>
+      <link>https://lucywang000.github.io/clj-statecharts/docs/identifying-states/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lucywang000.github.io/clj-statecharts/docs/identifying-states/</guid>
+      <description>Identifying States #  Syntax of State Identifiers #  In describing a transition, we need a way to represent the target state.
+A state is uniquely identified by the vector of its path from the root, with the first element being a special keyword :&amp;gt;.
+For instance, if we have a state :s1 and it has a child state :s1.1, then they could be identified by [:&amp;gt; :s1] and [:&amp;gt; :s1 :s1.</description>
+    </item>
+    
+    <item>
+      <title>Parallel States</title>
+      <link>https://lucywang000.github.io/clj-statecharts/docs/parallel-states/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lucywang000.github.io/clj-statecharts/docs/parallel-states/</guid>
+      <description>Why Parallel States #  (a.k.a concurrent states or orthogonal regions)
+Usually within a statecharts, all states are tightly related and mutual exclusive to each other (e.g. uploading and uploaded in a file application.).
+However, in lots of real world complex applications, there could be multiple &amp;ldquo;regions&amp;rdquo; of the application that are loosely related, or not related at all, but is always used/reasoned together in a module/screen/subsystem.
+For instance, in a files management application, there could be</description>
+    </item>
+    
+    <item>
+      <title>Re-frame Integration</title>
+      <link>https://lucywang000.github.io/clj-statecharts/docs/integration/re-frame/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lucywang000.github.io/clj-statecharts/docs/integration/re-frame/</guid>
+      <description>Re-frame Integration #  First, re-frame itself is much like a simple state machine: an event triggers the change of the app-db (much like the context in statecharts), as well as execution of other effects (much like actions in a fsm/statecharts).
+There are two ways to integrate clj-statecharts with re-frame:
+ Integrate re-frame with the immutable api Or integrate with the service api  The statecharts.re-frame namespace provides some goodies for both ways of integration.</description>
+    </item>
+    
+    <item>
+      <title>Transitions</title>
+      <link>https://lucywang000.github.io/clj-statecharts/docs/transitions/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://lucywang000.github.io/clj-statecharts/docs/transitions/</guid>
+      <description>Transitions #  Transitions are the most important parts of a state machine, since it embodies the major logic of the application.
+Basic Transitions #  The basic elements of a transition is the target state and the actions to execute.
+{:states {:s1 {:on {:event1 {:target :s2 :actions some-action-fn}}}} If the current state is :s1 and event :event1 happens, the new state would be :s2 and the action function some-action-fn would be executed.</description>
+    </item>
+    
+  </channel>
+</rss>

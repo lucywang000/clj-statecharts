@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" dir=>
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Delayed Transitions #  Basic Delayed Transitions #  To specify a transition that shall happen automatically after some time, use the :after keyword:
+{:states {:s1 {:after [{:delay 1000 :target :s2 :guard some-condition-fn :actions some-action} {:delay 2000 :target :s3 :actions some-action}]}}} All transition features like guards and actions could be used here, as you can see in the code snippet above.
+Dynamic Delay #  The amount of delay could be expressed as a context function.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Delayed Transitions" />
+<meta property="og:description" content="Delayed Transitions #  Basic Delayed Transitions #  To specify a transition that shall happen automatically after some time, use the :after keyword:
+{:states {:s1 {:after [{:delay 1000 :target :s2 :guard some-condition-fn :actions some-action} {:delay 2000 :target :s3 :actions some-action}]}}} All transition features like guards and actions could be used here, as you can see in the code snippet above.
+Dynamic Delay #  The amount of delay could be expressed as a context function." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lucywang000.github.io/clj-statecharts/docs/delayed/" />
+
+<title>Delayed Transitions | clj-statecharts</title>
+<link rel="manifest" href="/clj-statecharts/manifest.json">
+<link rel="icon" href="/clj-statecharts/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/clj-statecharts/book.min.6cd8553a6854f4812343f0f0c8baca31271e686434f381fbe3c7226f66639176.css" integrity="sha256-bNhVOmhU9IEjQ/DwyLrKMSceaGQ084H748cib2ZjkXY=">
+<script defer src="/clj-statecharts/en.search.min.76bb5410c7b23374b230ec7a4c104f12eff93abf45a6cac9cee125f02e0791dc.js" integrity="sha256-drtUEMeyM3SyMOx6TBBPEu/5Or9FpsrJzuEl8C4Hkdw="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir=>
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      
+  <nav>
+<h2 class="book-brand">
+  <a href="/clj-statecharts"><span>clj-statecharts</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  <ul>
+<li><a href="/clj-statecharts/">Introduction</a></li>
+<li><a href="/clj-statecharts/docs/get-started/">Get Started</a></li>
+<li><a href="/clj-statecharts/docs/concepts/">Concepts: Machine, State, Service</a></li>
+<li><a href="/clj-statecharts/docs/actions/">Actions</a></li>
+<li><a href="/clj-statecharts/docs/transitions/">Transitions</a></li>
+<li><a href="/clj-statecharts/docs/hierarchical-states/">Hierarchical States</a></li>
+<li><a href="/clj-statecharts/docs/parallel-states/">Parallel States</a></li>
+<li><a href="/clj-statecharts/docs/identifying-states/">Identifying States</a></li>
+<li><a href="/clj-statecharts/docs/guards/">Guarded Transitions</a></li>
+<li><a href="/clj-statecharts/docs/delayed/"class=active>Delayed Transitions</a></li>
+<li>Integration
+<ul>
+<li><a href="/clj-statecharts/docs/integration/re-frame/">Re-frame integration</a></li>
+</ul>
+</li>
+<li>Internals
+<ul>
+<li><a href="/clj-statecharts/docs/xstate/">Difference from XState</a></li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script>
+
+
+ 
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/clj-statecharts/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Delayed Transitions</strong>
+
+  <label for="toc-control">
+    
+    <img src="/clj-statecharts/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#basic-delayed-transitions">Basic Delayed Transitions</a></li>
+    <li><a href="#dynamic-delay">Dynamic Delay</a></li>
+    <li><a href="#notes">Notes</a></li>
+  </ul>
+</nav>
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="delayed-transitions">
+  Delayed Transitions
+  <a class="anchor" href="#delayed-transitions">#</a>
+</h1>
+<h2 id="basic-delayed-transitions">
+  Basic Delayed Transitions
+  <a class="anchor" href="#basic-delayed-transitions">#</a>
+</h2>
+<p>To specify a transition that shall happen automatically after some time, use the
+<code>:after</code> keyword:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:states</span>
+  {<span style="color:#e6db74">:s1</span> {<span style="color:#e6db74">:after</span> [{<span style="color:#e6db74">:delay</span> <span style="color:#ae81ff">1000</span>
+                 <span style="color:#e6db74">:target</span> <span style="color:#e6db74">:s2</span>
+                 <span style="color:#e6db74">:guard</span> some-condition-fn
+                 <span style="color:#e6db74">:actions</span> some-action}
+                {<span style="color:#e6db74">:delay</span> <span style="color:#ae81ff">2000</span>
+                 <span style="color:#e6db74">:target</span> <span style="color:#e6db74">:s3</span>
+                 <span style="color:#e6db74">:actions</span> some-action}]}}}
+</code></pre></div><p>All transition features like guards and actions could be used here, as
+you can see in the code snippet above.</p>
+<h2 id="dynamic-delay">
+  Dynamic Delay
+  <a class="anchor" href="#dynamic-delay">#</a>
+</h2>
+<p>The amount of delay could be expressed as a context function.</p>
+<p>For example, in a state machine that manages a websocket connection,
+the reconnection delay could be calculated as an exponential backoff.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defn </span>calculate-backoff
+  <span style="color:#e6db74">&#34;Exponential backoff, with a upper limit of 15 seconds.&#34;</span>
+  [state <span style="color:#f92672">&amp;</span> _]
+  (-&gt; (<span style="color:#a6e22e">js/Math.pow</span> <span style="color:#ae81ff">2</span> (<span style="color:#e6db74">:retries</span> state))
+      (* <span style="color:#ae81ff">1000</span>)
+      (min <span style="color:#ae81ff">15000</span>)))
+
+(<span style="color:#66d9ef">defn </span>update-retries [state <span style="color:#f92672">&amp;</span> _]
+  (<span style="color:#a6e22e">update</span> state <span style="color:#e6db74">:retries</span> inc))
+
+<span style="color:#75715e">;; Part of the machine definition</span>
+{<span style="color:#e6db74">:states</span>
+ {<span style="color:#e6db74">:connecting</span>   {<span style="color:#e6db74">:entry</span> try-connect
+                 <span style="color:#e6db74">:on</span>    {<span style="color:#e6db74">:success-connect</span> <span style="color:#e6db74">:connected</span>}}
+  <span style="color:#e6db74">:disconnected</span> {<span style="color:#e6db74">:entry</span> (<span style="color:#a6e22e">assign</span> update-retries)
+                 <span style="color:#e6db74">:after</span> [{<span style="color:#e6db74">:delay</span> calculate-backoff <span style="color:#e6db74">:target</span> <span style="color:#e6db74">:connecting</span>}]}
+  <span style="color:#e6db74">:connected</span>    {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:connection-closed</span> <span style="color:#e6db74">:disconnected</span>}}}}
+</code></pre></div><h2 id="notes">
+  Notes
+  <a class="anchor" href="#notes">#</a>
+</h2>
+<ul>
+<li>
+<p>Delayed transitions currently only works in the CLJS. CLJ support is going to be added soon.</p>
+</li>
+<li>
+<p>When using the <a href="/clj-statecharts/docs/get-started/#the-immutable-api">Immutable API</a>, the machine spec must have a <code>:scheduler</code> key that satisfies the
+<a href="https://github.com/lucywang000/clj-statecharts/blob/master/src/statecharts/delayed.cljc#L6-L8"><code>statecharts.delayed.Scheduler</code></a> protocol.</p>
+</li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+  <div>
+    <a class="flex align-center" href="https://github.com/lucywang000/clj-statecharts/blob/master/docs/content//docs/delayed.md" target="_blank" rel="noopener">
+      <img src="/clj-statecharts/svg/edit.svg" class="book-icon" alt="Edit" />
+      <span>Edit this page</span>
+    </a>
+  </div>
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#basic-delayed-transitions">Basic Delayed Transitions</a></li>
+    <li><a href="#dynamic-delay">Dynamic Delay</a></li>
+    <li><a href="#notes">Notes</a></li>
+  </ul>
+</nav>
+
+ 
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

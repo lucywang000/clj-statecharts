@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en" dir=>
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Transitions #  Transitions are the most important parts of a state machine, since it embodies the major logic of the application.
+Basic Transitions #  The basic elements of a transition is the target state and the actions to execute.
+{:states {:s1 {:on {:event1 {:target :s2 :actions some-action-fn}}}} If the current state is :s1 and event :event1 happens, the new state would be :s2 and the action function some-action-fn would be executed.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Transitions" />
+<meta property="og:description" content="Transitions #  Transitions are the most important parts of a state machine, since it embodies the major logic of the application.
+Basic Transitions #  The basic elements of a transition is the target state and the actions to execute.
+{:states {:s1 {:on {:event1 {:target :s2 :actions some-action-fn}}}} If the current state is :s1 and event :event1 happens, the new state would be :s2 and the action function some-action-fn would be executed." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lucywang000.github.io/clj-statecharts/docs/transitions/" />
+
+<title>Transitions | clj-statecharts</title>
+<link rel="manifest" href="/clj-statecharts/manifest.json">
+<link rel="icon" href="/clj-statecharts/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/clj-statecharts/book.min.6cd8553a6854f4812343f0f0c8baca31271e686434f381fbe3c7226f66639176.css" integrity="sha256-bNhVOmhU9IEjQ/DwyLrKMSceaGQ084H748cib2ZjkXY=">
+<script defer src="/clj-statecharts/en.search.min.76bb5410c7b23374b230ec7a4c104f12eff93abf45a6cac9cee125f02e0791dc.js" integrity="sha256-drtUEMeyM3SyMOx6TBBPEu/5Or9FpsrJzuEl8C4Hkdw="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir=>
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      
+  <nav>
+<h2 class="book-brand">
+  <a href="/clj-statecharts"><span>clj-statecharts</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  <ul>
+<li><a href="/clj-statecharts/">Introduction</a></li>
+<li><a href="/clj-statecharts/docs/get-started/">Get Started</a></li>
+<li><a href="/clj-statecharts/docs/concepts/">Concepts: Machine, State, Service</a></li>
+<li><a href="/clj-statecharts/docs/actions/">Actions</a></li>
+<li><a href="/clj-statecharts/docs/transitions/"class=active>Transitions</a></li>
+<li><a href="/clj-statecharts/docs/hierarchical-states/">Hierarchical States</a></li>
+<li><a href="/clj-statecharts/docs/parallel-states/">Parallel States</a></li>
+<li><a href="/clj-statecharts/docs/identifying-states/">Identifying States</a></li>
+<li><a href="/clj-statecharts/docs/guards/">Guarded Transitions</a></li>
+<li><a href="/clj-statecharts/docs/delayed/">Delayed Transitions</a></li>
+<li>Integration
+<ul>
+<li><a href="/clj-statecharts/docs/integration/re-frame/">Re-frame integration</a></li>
+</ul>
+</li>
+<li>Internals
+<ul>
+<li><a href="/clj-statecharts/docs/xstate/">Difference from XState</a></li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script>
+
+
+ 
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/clj-statecharts/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Transitions</strong>
+
+  <label for="toc-control">
+    
+    <img src="/clj-statecharts/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#basic-transitions">Basic Transitions</a></li>
+    <li><a href="#internal-external-transitions">Internal &amp; External Transitions</a></li>
+    <li><a href="#self-transitions">Self Transitions</a></li>
+    <li><a href="#eventless-transitions">EventLess Transitions</a></li>
+  </ul>
+</nav>
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="transitions">
+  Transitions
+  <a class="anchor" href="#transitions">#</a>
+</h1>
+<p>Transitions are the most important parts of a state machine, since it
+embodies the major logic of the application.</p>
+<h2 id="basic-transitions">
+  Basic Transitions
+  <a class="anchor" href="#basic-transitions">#</a>
+</h2>
+<p>The basic elements of a transition is the target state and the actions
+to execute.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:states</span> {<span style="color:#e6db74">:s1</span>
+          {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:event1</span> {<span style="color:#e6db74">:target</span> <span style="color:#e6db74">:s2</span>
+                         <span style="color:#e6db74">:actions</span> some-action-fn}}}}
+</code></pre></div><p>If the current state is <code>:s1</code> and event <code>:event1</code> happens, the new
+state would be <code>:s2</code> and the action function <code>some-action-fn</code> would be
+executed.</p>
+<p>Some syntax sugars:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:states</span> {<span style="color:#e6db74">:s1</span>
+          {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:event1</span> {<span style="color:#e6db74">:target</span>  <span style="color:#e6db74">:s2</span>
+                         <span style="color:#e6db74">:actions</span> [action-fn1 action-fn2]} <span style="color:#75715e">;; (1)</span>
+                <span style="color:#e6db74">:event2</span> <span style="color:#e6db74">:s3</span>}}}}                            <span style="color:#75715e">;; (2)</span>
+</code></pre></div><p>(1) The actions could be a vector of multiple action functions to execute.</p>
+<p>(2) If there is no actions, the transition could be simplified to be a single
+keyword.</p>
+<p>Please note that event names could be any keywords, with one exception: <strong>keywords
+namespace &ldquo;fsm&rdquo; is considered reserved for clj-statecharts&rsquo;s internal use</strong>, so do
+not use event names like <code>:fsm/foo</code> in your application code.</p>
+<h2 id="internal-external-transitions">
+  Internal &amp; External Transitions
+  <a class="anchor" href="#internal-external-transitions">#</a>
+</h2>
+<p><em>Before reading this section, make sure you have read the <a href="/clj-statecharts/docs/identifying-states/">Identifying
+States</a> about the
+absolute and relative syntax of representing a state.</em></p>
+<p>A state could transition to one of its child states.</p>
+<ul>
+<li>If the transition triggers the entry/exit actions on the parent
+state, it&rsquo;s called an <strong>external transition</strong>.</li>
+<li>Otherwise, it&rsquo;s called an <strong>internal transition</strong>.</li>
+</ul>
+<p>Here is an example of an internal &amp; external transition:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:states</span> {<span style="color:#e6db74">:s1</span> {<span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:s1.1</span>
+               <span style="color:#e6db74">:entry</span> entry1
+               <span style="color:#e6db74">:exit</span> exit1
+               <span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:event1_1.2_internal</span> [<span style="color:#e6db74">:.</span> <span style="color:#e6db74">:s1.2</span>]      <span style="color:#75715e">;; (1)</span>
+                    <span style="color:#e6db74">:event1_1.2_external</span> [<span style="color:#e6db74">:&gt;</span> <span style="color:#e6db74">:s1</span> <span style="color:#e6db74">:s1.2</span>]} <span style="color:#75715e">;; (2)</span>
+               <span style="color:#e6db74">:states</span> {<span style="color:#e6db74">:s1.1</span> {}
+                        <span style="color:#e6db74">:s1.2</span> {}}}}}
+</code></pre></div><p>State <code>:s1</code> has two child states <code>:s1.1</code> and <code>:s1.2</code>.</p>
+<p>(1) When event <code>event1_1.2_internal</code> happens, the new state would be
+<code>:s1.2</code>, but the entry/exit actions of state <code>:s1</code> <strong>would not be</strong>
+executed.</p>
+<p>(2) When event <code>event1_1.2_external</code> happens, the new state would also
+be <code>:s1.2</code>, but the entry/exit actions of state <code>:s1</code> <strong>would be</strong>
+executed.</p>
+<h2 id="self-transitions">
+  Self Transitions
+  <a class="anchor" href="#self-transitions">#</a>
+</h2>
+<p>A state could transition to itself, this is called a
+<a href="https://statecharts.github.io/glossary/self-transition.html">self-transition</a>.</p>
+<p>For instance, a calculator FSM could have a state <code>:operand1</code>
+representing the state that the user is typing the first operand. So
+the <code>:input-digit</code> event should keep the state machine in that state
+(but using actions to update the value of the operand on each input),
+instead of transitioning to a new state.</p>
+<p>A self-transition could also be either internal or external. To specify an internal self-transition, simply omit the <code>:target</code> key in the transition map.</p>
+<p>For instance:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:states</span> {<span style="color:#e6db74">:s1</span> {<span style="color:#e6db74">:entry</span> entry1
+               <span style="color:#e6db74">:exit</span>  exit1
+               <span style="color:#e6db74">:on</span>    {<span style="color:#e6db74">:event1_1_internal</span> {<span style="color:#e6db74">:actions</span> some-action} <span style="color:#75715e">;; (1)</span>
+                       <span style="color:#e6db74">:event1_1_external</span> <span style="color:#e6db74">:s1</span>                    <span style="color:#75715e">;; (2)</span>
+                       }}}}
+</code></pre></div><p>(1) For event <code>:event1_1_internal</code>, the target state is not specified
+(or <code>nil</code>). In this case, the entry/exit actions of <code>:s1</code> <strong>would not
+be</strong> executed.</p>
+<p>(2) For event <code>:event1_1_external</code>, the target state is explicitly
+provided as itself, so the entry/exit actions of <code>:s1</code> <strong>would be</strong>
+executed.</p>
+<h2 id="eventless-transitions">
+  EventLess Transitions
+  <a class="anchor" href="#eventless-transitions">#</a>
+</h2>
+<p>Quoting <a href="https://xstate.js.org/docs/guides/transitions.html#eventless-transitions">XState doc</a>:</p>
+<blockquote>
+<p>An eventless transition is a transition that is always taken when the machine is
+in the state where it is defined, and when its guards evaluates to true. They are
+always checked when the state is first entered, before handling any other events.</p>
+</blockquote>
+<p>Eventless transitions are defined on the <code>:always</code> key of the state node:</p>
+<p>Given the following state machine:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:states</span> {<span style="color:#e6db74">:s1</span> {<span style="color:#e6db74">:entry</span> entry1
+               <span style="color:#e6db74">:exit</span> exit1
+               <span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:e12</span> <span style="color:#e6db74">:s2</span>
+                    <span style="color:#e6db74">:actions</span> action12}}
+          <span style="color:#e6db74">:s2</span> {<span style="color:#e6db74">:entry</span> entry2
+               <span style="color:#e6db74">:exit</span> exit2
+               <span style="color:#e6db74">:always</span> [{<span style="color:#e6db74">:guard</span> guard23
+                         <span style="color:#e6db74">:target</span> <span style="color:#e6db74">:s3</span>
+                         <span style="color:#e6db74">:actions</span> action23}
+                        {<span style="color:#e6db74">:guard</span> guard24
+                         <span style="color:#e6db74">:target</span> <span style="color:#e6db74">:s4</span>
+                         <span style="color:#e6db74">:actions</span> action23}]
+               <span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:e23</span> <span style="color:#e6db74">:s3</span>}}
+          <span style="color:#e6db74">:s3</span> {<span style="color:#e6db74">:entry</span> entry3}
+          <span style="color:#e6db74">:s4</span> {}}}
+</code></pre></div><p>Assume current state is <code>:s1</code>, and event <code>:e12</code> happens.</p>
+<ul>
+<li>The target state is <code>:s2</code>. Because <code>:s2</code> has eventless transitions defined, it
+would immediately evaluates the guard function <code>guard23</code>.</li>
+<li>If <code>guard23</code> returns a truthy value, the machine would transition to state <code>:s3</code>.
+In this case these actions would be executed one by one:
+<ul>
+<li>exit1</li>
+<li>action12</li>
+<li>entry2</li>
+<li>exit2</li>
+<li>action23</li>
+<li>entry3</li>
+</ul>
+</li>
+<li>Otherwise <code>guard24</code> would be evaluated. If <code>guard24</code> returns truthy, the machine
+would transition to <code>:s4</code> (and similarly a list of actions would be executed).
+Otherwise it would stay in <code>:s2</code>.</li>
+</ul>
+<p>The event args that accompanies <code>:e12</code> would be passed to every action that is
+executed.</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+  <div>
+    <a class="flex align-center" href="https://github.com/lucywang000/clj-statecharts/blob/master/docs/content//docs/transitions.md" target="_blank" rel="noopener">
+      <img src="/clj-statecharts/svg/edit.svg" class="book-icon" alt="Edit" />
+      <span>Edit this page</span>
+    </a>
+  </div>
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#basic-transitions">Basic Transitions</a></li>
+    <li><a href="#internal-external-transitions">Internal &amp; External Transitions</a></li>
+    <li><a href="#self-transitions">Self Transitions</a></li>
+    <li><a href="#eventless-transitions">EventLess Transitions</a></li>
+  </ul>
+</nav>
+
+ 
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

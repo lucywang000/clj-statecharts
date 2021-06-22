@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en" dir=>
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Why Parallel States #  (a.k.a concurrent states or orthogonal regions)
+Usually within a statecharts, all states are tightly related and mutual exclusive to each other (e.g. uploading and uploaded in a file application.).
+However, in lots of real world complex applications, there could be multiple &ldquo;regions&rdquo; of the application that are loosely related, or not related at all, but is always used/reasoned together in a module/screen/subsystem.
+For instance, in a files management application, there could be">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Parallel States" />
+<meta property="og:description" content="Why Parallel States #  (a.k.a concurrent states or orthogonal regions)
+Usually within a statecharts, all states are tightly related and mutual exclusive to each other (e.g. uploading and uploaded in a file application.).
+However, in lots of real world complex applications, there could be multiple &ldquo;regions&rdquo; of the application that are loosely related, or not related at all, but is always used/reasoned together in a module/screen/subsystem.
+For instance, in a files management application, there could be" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lucywang000.github.io/clj-statecharts/docs/parallel-states/" />
+
+<title>Parallel States | clj-statecharts</title>
+<link rel="manifest" href="/clj-statecharts/manifest.json">
+<link rel="icon" href="/clj-statecharts/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/clj-statecharts/book.min.6cd8553a6854f4812343f0f0c8baca31271e686434f381fbe3c7226f66639176.css" integrity="sha256-bNhVOmhU9IEjQ/DwyLrKMSceaGQ084H748cib2ZjkXY=">
+<script defer src="/clj-statecharts/en.search.min.76bb5410c7b23374b230ec7a4c104f12eff93abf45a6cac9cee125f02e0791dc.js" integrity="sha256-drtUEMeyM3SyMOx6TBBPEu/5Or9FpsrJzuEl8C4Hkdw="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir=>
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      
+  <nav>
+<h2 class="book-brand">
+  <a href="/clj-statecharts"><span>clj-statecharts</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  <ul>
+<li><a href="/clj-statecharts/">Introduction</a></li>
+<li><a href="/clj-statecharts/docs/get-started/">Get Started</a></li>
+<li><a href="/clj-statecharts/docs/concepts/">Concepts: Machine, State, Service</a></li>
+<li><a href="/clj-statecharts/docs/actions/">Actions</a></li>
+<li><a href="/clj-statecharts/docs/transitions/">Transitions</a></li>
+<li><a href="/clj-statecharts/docs/hierarchical-states/">Hierarchical States</a></li>
+<li><a href="/clj-statecharts/docs/parallel-states/"class=active>Parallel States</a></li>
+<li><a href="/clj-statecharts/docs/identifying-states/">Identifying States</a></li>
+<li><a href="/clj-statecharts/docs/guards/">Guarded Transitions</a></li>
+<li><a href="/clj-statecharts/docs/delayed/">Delayed Transitions</a></li>
+<li>Integration
+<ul>
+<li><a href="/clj-statecharts/docs/integration/re-frame/">Re-frame integration</a></li>
+</ul>
+</li>
+<li>Internals
+<ul>
+<li><a href="/clj-statecharts/docs/xstate/">Difference from XState</a></li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script>
+
+
+ 
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/clj-statecharts/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Parallel States</strong>
+
+  <label for="toc-control">
+    
+    <img src="/clj-statecharts/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#what-is-parallel-states">What is Parallel States</a></li>
+    <li><a href="#how-to-define-a-parallel-state-node">How to define a parallel state node</a>
+      <ul>
+        <li><a href="#hierarchical-parallel-state-node">Hierarchical parallel state node</a></li>
+      </ul>
+    </li>
+    <li><a href="#state-representation-for-parallel-node">State Representation for Parallel Node</a></li>
+    <li><a href="#advantages-and-disadvantages-of-parallel-states">Advantages and Disadvantages of Parallel States</a>
+      <ul>
+        <li><a href="#advantages">Advantages</a></li>
+        <li><a href="#disadvantages">Disadvantages</a></li>
+      </ul>
+    </li>
+    <li><a href="#useful-links">Useful links</a></li>
+  </ul>
+</nav>
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="why-parallel-states">
+  Why Parallel States
+  <a class="anchor" href="#why-parallel-states">#</a>
+</h1>
+<p>(a.k.a concurrent states or orthogonal regions)</p>
+<p>Usually within a statecharts, all states are tightly related and mutual
+exclusive to each other (e.g. <code>uploading</code> and <code>uploaded</code> in a file
+application.).</p>
+<p>However, in lots of real world complex applications, there could be multiple
+&ldquo;regions&rdquo; of the application that are loosely related, or not related at all,
+but is always used/reasoned together in a module/screen/subsystem.</p>
+<p>For instance, in a files management application, there could be</p>
+<ul>
+<li>a files list on the main part of the screen, and</li>
+<li>a &ldquo;properties&rdquo; window that is placed on the right of the screen when a file is
+selected.</li>
+</ul>
+<p>The files list could have the following states:</p>
+<ul>
+<li><code>list-loading</code>: requesting the list of files from the server</li>
+<li><code>list-loaded</code>: successfully get the list of files</li>
+<li><code>list-load-failed</code>: error when requesting the list of files, e.g. ajax request
+fails because of network error</li>
+</ul>
+<p>The files property has the following states:</p>
+<ul>
+<li><code>props-idle</code>: no file is selected, so nothing to show</li>
+<li><code>props-loading</code>: file is selected, and requesting the details of the file from
+the server</li>
+<li><code>props-loaded</code></li>
+<li><code>props-load-failed</code></li>
+</ul>
+<p>Most people would feel comfortable to model this screen with two statecharts.
+But as more features are added, we&rsquo;ll need to create and maintain and reason
+about more and more disparate statecharts. For instance, each file could have a
+list of comments, which would pop out when a user clicks a &ldquo;show comments&rdquo;
+button. Of course we can just add one more new statecharts, but it&rsquo;s obvious to
+conclude that this doesn&rsquo;t look that appealing, because:</p>
+<ol>
+<li>With the states scattered in more and more multiple places, it becomes harder
+and harder for us to see and reason about &ldquo;the big picture&rdquo; of the current
+screen.</li>
+<li>Part of the statecharts context has to be duplicated among different
+statecharts, e.g. the current selected file name.</li>
+<li>Lots of boilerplate. Each state machine requires an <code>id</code>, a call to
+<code>fsm/machine</code> and <code>fsm.rf/integrate</code> (see <a href="/clj-statecharts/docs/integration/re-frame/">re-frame
+integration</a> for details.)</li>
+</ol>
+<h2 id="what-is-parallel-states">
+  What is Parallel States
+  <a class="anchor" href="#what-is-parallel-states">#</a>
+</h2>
+<p><strong>Parallel states</strong> (a.k.a <strong>concurrent states</strong>) is a mechanism in statecharts
+that could be used to use a single statecharts to model different parts of an
+application that doesn&rsquo;t depend on each other. Conceptually:</p>
+<ul>
+<li>when an event comes, each child of a parallel state receives this event at the
+same time. They could either handle it or ignore it, since some events only
+makes sense to one part of the screen, e.g. &ldquo;property-loaded&rdquo; should be
+handled by the props part, but should be ignored by the other parts.</li>
+<li>The current state of the statecharts is a combination of all parallel
+children.</li>
+</ul>
+<h2 id="how-to-define-a-parallel-state-node">
+  How to define a parallel state node
+  <a class="anchor" href="#how-to-define-a-parallel-state-node">#</a>
+</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure"><span style="color:#75715e">;!zprint {:format :on :map {:justify? true} :pair {:justify? true}}</span>
+{<span style="color:#e6db74">:id</span>       <span style="color:#e6db74">:file-app</span>
+ <span style="color:#e6db74">:type</span>     <span style="color:#e6db74">:parallel</span>                        <span style="color:#75715e">;; (1)</span>
+ <span style="color:#e6db74">:context</span>  {<span style="color:#e6db74">:selected-file-name</span> nil}
+ <span style="color:#e6db74">:regions</span>                                   <span style="color:#75715e">;; (2)</span>
+ {<span style="color:#e6db74">:main</span>  {<span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:loading</span>                 <span style="color:#75715e">;; (3)</span>
+          <span style="color:#e6db74">:states</span>  {<span style="color:#e6db74">:loading</span>     {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:success-load-files</span> <span style="color:#e6db74">:loaded</span>
+                                       <span style="color:#e6db74">:fail-load-files</span>    <span style="color:#e6db74">:load-failed</span>}}
+                    <span style="color:#e6db74">:loaded</span>      {}
+                    <span style="color:#e6db74">:load-failed</span> {}}}
+  <span style="color:#e6db74">:props</span> {<span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:idle</span>
+          <span style="color:#e6db74">:states</span>  {<span style="color:#e6db74">:idle</span>        {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:file-selected</span> <span style="color:#e6db74">:loading</span>}}
+                    <span style="color:#e6db74">:loading</span>     {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:success-load-props</span> <span style="color:#e6db74">:loaded</span>
+                                       <span style="color:#e6db74">:fail-load-props</span>    <span style="color:#e6db74">:load-failed</span>}}
+                    <span style="color:#e6db74">:loaded</span>      {}
+                    <span style="color:#e6db74">:load-failed</span> {}}}}
+
+ <span style="color:#e6db74">:comments</span> {<span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:idle</span>
+            <span style="color:#e6db74">:states</span>  {<span style="color:#e6db74">:idle</span>        {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:show-comments</span> <span style="color:#e6db74">:loading</span>}}
+                      <span style="color:#e6db74">:loading</span>     {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:success-load-comments</span> <span style="color:#e6db74">:loaded</span>
+                                         <span style="color:#e6db74">:fail-load-comments</span>    <span style="color:#e6db74">:load-failed</span>}}
+                      <span style="color:#e6db74">:loaded</span>      {}
+                      <span style="color:#e6db74">:load-failed</span> {}}}}
+</code></pre></div><p>(1) Use <code>{:type :parallel}</code> to define a parallel state node</p>
+<p>(2) Define the child regions in the <code>:regions</code> key.</p>
+<p>(3) Each child node of a parallel node must be a hierarchical state node.</p>
+<h3 id="hierarchical-parallel-state-node">
+  Hierarchical parallel state node
+  <a class="anchor" href="#hierarchical-parallel-state-node">#</a>
+</h3>
+<p>In the example above, the root node of the statecharts is a parallel node.
+However you can put a parallel node anywhere in the state chart, e.g.:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:id</span> <span style="color:#e6db74">:hierarchical-parallel-demo</span>
+ <span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:p2</span>
+ <span style="color:#e6db74">:states</span>                                  <span style="color:#75715e">;; (1)</span>
+ {<span style="color:#e6db74">:p1</span>                                     <span style="color:#75715e">;; (2)</span>
+  {<span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:p11</span>
+   <span style="color:#e6db74">:states</span> {<span style="color:#e6db74">:p11</span> {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:e12</span> <span style="color:#e6db74">:p12</span>}}
+            <span style="color:#e6db74">:p12</span> {}}}
+
+  <span style="color:#75715e">;; p2 is a hierarchical parallel node</span>
+  <span style="color:#e6db74">:p2</span>                                     <span style="color:#75715e">;; (3)</span>
+  {<span style="color:#e6db74">:type</span> <span style="color:#e6db74">:parallel</span>
+   <span style="color:#e6db74">:regions</span>
+   {<span style="color:#e6db74">:p2.a</span>                                 <span style="color:#75715e">;; (4)</span>
+    {<span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:p2.a1</span>
+     <span style="color:#e6db74">:states</span> {<span style="color:#e6db74">:p2.a1</span> {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:e12</span> <span style="color:#e6db74">:p2.a2</span>}}
+              <span style="color:#e6db74">:p2.a2</span> {}}}
+
+    <span style="color:#e6db74">:p2.b</span>                                 <span style="color:#75715e">;; (5)</span>
+    {<span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:p2b2</span>
+     <span style="color:#e6db74">:states</span>
+     {<span style="color:#e6db74">:p2b1</span> {<span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:e231</span> <span style="color:#e6db74">:p2b2</span>}}
+      <span style="color:#75715e">;; parallel nest level depth +1</span>
+      <span style="color:#e6db74">:p2b2</span> {<span style="color:#e6db74">:type</span> <span style="color:#e6db74">:parallel</span>              <span style="color:#75715e">;; (6)</span>
+             <span style="color:#e6db74">:regions</span> {<span style="color:#e6db74">:p2b2.a</span> {<span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:p2b2.a1</span>
+                               <span style="color:#e6db74">:states</span> {<span style="color:#e6db74">:p2b2.a1</span> {}}}
+                      <span style="color:#e6db74">:p2b2.b</span> {<span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:p2b2.b1</span>
+                               <span style="color:#e6db74">:states</span> {<span style="color:#e6db74">:p2b2.b1</span>
+                                        {}}}}}}}}}}}
+</code></pre></div><p>(1) The root node is a hierarchical node, with two regions <code>:p1</code> and <code>:p2</code></p>
+<p>(2) <code>:p1</code> is a hierarchical node</p>
+<p>(3) <code>:p2</code> is a parallel node with two regions <code>:p2.a</code> and <code>:p2.b</code></p>
+<p>(4) <code>:p2.a</code> is a hierarchical node</p>
+<p>(5)(6) <code>:p2.b</code> is a hierarchical node, but one of its children <code>:p2b2</code> is a
+parallel node.</p>
+<p>We can build arbitrary complex statecharts this way, but it&rsquo;s highly discouraged
+because it makes the statecharts harder and harder to reason about.</p>
+<h2 id="state-representation-for-parallel-node">
+  State Representation for Parallel Node
+  <a class="anchor" href="#state-representation-for-parallel-node">#</a>
+</h2>
+<ul>
+<li>If the fsm root node is a parallel node, then the whole state is represented
+as a map, e.g. <code>{:r1 :r1-state :r2 :r2-state}</code></li>
+<li>In a typical hierarchical node, the current state is represented as
+<code>[:s1 :s1.1]</code>. However, if <code>:s1.1</code> is a parallel node and has two regions
+<code>:r1</code> and <code>:r2</code>, then it would be represented as
+<code>[:s1 {:s1.1 {:r1 :r1-state :r2 :r2-state}}]</code>.</li>
+</ul>
+<h2 id="advantages-and-disadvantages-of-parallel-states">
+  Advantages and Disadvantages of Parallel States
+  <a class="anchor" href="#advantages-and-disadvantages-of-parallel-states">#</a>
+</h2>
+<h3 id="advantages">
+  Advantages
+  <a class="anchor" href="#advantages">#</a>
+</h3>
+<ul>
+<li>A single statecharts spec could as the blueprint of the logic of a coherent
+module/screen/subsystem, instead of scattered among multiple smaller
+statecharts. With a better big picture, we could more easily spot places where
+states design could be improved.</li>
+<li>Less boilerplate code.</li>
+<li>Avoid duplication of the same piece of information in the contexts of
+different statecharts.</li>
+</ul>
+<h3 id="disadvantages">
+  Disadvantages
+  <a class="anchor" href="#disadvantages">#</a>
+</h3>
+<p>Nothing.</p>
+<p>Some may say &ldquo;it&rsquo;s more complex&rdquo;. But the complexity is a result of the
+inheritent complexity of the application itself, not introduced by using
+parallel nodes in the statecharts. The alternative is to use multiple smaller
+statecharts. However to keep track and reason about all of these smaller
+statecharts introduces extra cost both in your code and in your mind.</p>
+<p>Some may worry about &ldquo;there would be a performance impact&rdquo;, since for a parallel
+state, each event is dispatched to all its child states and in lots of cases
+some events is only handled by one child state. However, IMO this is hardly a
+problem given today&rsquo;s hardware technology, unless you&rsquo;re building some
+nano-second HFT system. For most applications, clj-statecharts takes less than
+1ms to process an event.</p>
+<h2 id="useful-links">
+  Useful links
+  <a class="anchor" href="#useful-links">#</a>
+</h2>
+<ul>
+<li><a href="https://statecharts.github.io/glossary/parallel-state.html">Parallel States in StateCharts 101</a></li>
+<li><a href="https://xstate.js.org/docs/guides/parallel.html">XState&rsquo;s parallel states support</a></li>
+</ul>
+<p>Note that in xstate the regions are still represented in the <code>states</code> key, which
+I think is not a good choice since <code>states</code> is also used to represent the
+children of hierarchical states. So in clj-statecharts we use the <code>:regions</code>
+key.</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+  <div>
+    <a class="flex align-center" href="https://github.com/lucywang000/clj-statecharts/blob/master/docs/content//docs/parallel-states.md" target="_blank" rel="noopener">
+      <img src="/clj-statecharts/svg/edit.svg" class="book-icon" alt="Edit" />
+      <span>Edit this page</span>
+    </a>
+  </div>
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#what-is-parallel-states">What is Parallel States</a></li>
+    <li><a href="#how-to-define-a-parallel-state-node">How to define a parallel state node</a>
+      <ul>
+        <li><a href="#hierarchical-parallel-state-node">Hierarchical parallel state node</a></li>
+      </ul>
+    </li>
+    <li><a href="#state-representation-for-parallel-node">State Representation for Parallel Node</a></li>
+    <li><a href="#advantages-and-disadvantages-of-parallel-states">Advantages and Disadvantages of Parallel States</a>
+      <ul>
+        <li><a href="#advantages">Advantages</a></li>
+        <li><a href="#disadvantages">Disadvantages</a></li>
+      </ul>
+    </li>
+    <li><a href="#useful-links">Useful links</a></li>
+  </ul>
+</nav>
+
+ 
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

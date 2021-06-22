@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" dir=>
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Difference from XState #  Why not use XState in CLJS? #   In XState the context can only be a plain js map. One can not use cljs objects (map/vector) as context, because xstate doesn&rsquo;t preserve the context object&rsquo;s prototype, because it uses Object.assign when updating the context. For a CLJS project, xstate may be good enough, but we still need a solution for CLJ projects. Last but not least, xstate uses strings to represent states everywhere, but in clj/cljs we tend to use keywords instead.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Difference from XState" />
+<meta property="og:description" content="Difference from XState #  Why not use XState in CLJS? #   In XState the context can only be a plain js map. One can not use cljs objects (map/vector) as context, because xstate doesn&rsquo;t preserve the context object&rsquo;s prototype, because it uses Object.assign when updating the context. For a CLJS project, xstate may be good enough, but we still need a solution for CLJ projects. Last but not least, xstate uses strings to represent states everywhere, but in clj/cljs we tend to use keywords instead." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lucywang000.github.io/clj-statecharts/docs/xstate/" />
+
+<title>Difference from XState | clj-statecharts</title>
+<link rel="manifest" href="/clj-statecharts/manifest.json">
+<link rel="icon" href="/clj-statecharts/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/clj-statecharts/book.min.6cd8553a6854f4812343f0f0c8baca31271e686434f381fbe3c7226f66639176.css" integrity="sha256-bNhVOmhU9IEjQ/DwyLrKMSceaGQ084H748cib2ZjkXY=">
+<script defer src="/clj-statecharts/en.search.min.76bb5410c7b23374b230ec7a4c104f12eff93abf45a6cac9cee125f02e0791dc.js" integrity="sha256-drtUEMeyM3SyMOx6TBBPEu/5Or9FpsrJzuEl8C4Hkdw="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir=>
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      
+  <nav>
+<h2 class="book-brand">
+  <a href="/clj-statecharts"><span>clj-statecharts</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  <ul>
+<li><a href="/clj-statecharts/">Introduction</a></li>
+<li><a href="/clj-statecharts/docs/get-started/">Get Started</a></li>
+<li><a href="/clj-statecharts/docs/concepts/">Concepts: Machine, State, Service</a></li>
+<li><a href="/clj-statecharts/docs/actions/">Actions</a></li>
+<li><a href="/clj-statecharts/docs/transitions/">Transitions</a></li>
+<li><a href="/clj-statecharts/docs/hierarchical-states/">Hierarchical States</a></li>
+<li><a href="/clj-statecharts/docs/parallel-states/">Parallel States</a></li>
+<li><a href="/clj-statecharts/docs/identifying-states/">Identifying States</a></li>
+<li><a href="/clj-statecharts/docs/guards/">Guarded Transitions</a></li>
+<li><a href="/clj-statecharts/docs/delayed/">Delayed Transitions</a></li>
+<li>Integration
+<ul>
+<li><a href="/clj-statecharts/docs/integration/re-frame/">Re-frame integration</a></li>
+</ul>
+</li>
+<li>Internals
+<ul>
+<li><a href="/clj-statecharts/docs/xstate/"class=active>Difference from XState</a></li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script>
+
+
+ 
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/clj-statecharts/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Difference from XState</strong>
+
+  <label for="toc-control">
+    
+    <img src="/clj-statecharts/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#why-not-use-xstate-in-cljs">Why not use XState in CLJS?</a></li>
+    <li><a href="#unsupported-xstatescxml-features">Unsupported XState/SCXML Features</a></li>
+    <li><a href="#different-structure-for-the-state-map">Different structure for the state map</a></li>
+  </ul>
+</nav>
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="difference-from-xstate">
+  Difference from XState
+  <a class="anchor" href="#difference-from-xstate">#</a>
+</h1>
+<h2 id="why-not-use-xstate-in-cljs">
+  Why not use XState in CLJS?
+  <a class="anchor" href="#why-not-use-xstate-in-cljs">#</a>
+</h2>
+<ul>
+<li>In XState the context can only be a plain js map. One can not use
+cljs objects (map/vector) as context, because xstate doesn&rsquo;t preserve
+the context object&rsquo;s prototype, because <a href="https://github.com/davidkpiano/xstate/blob/v4.7.1/packages/core/src/utils.ts#L432">it uses Object.assign when
+updating the
+context</a>.</li>
+<li>For a CLJS project, xstate may be good enough, but we still need a solution for CLJ projects.</li>
+<li>Last but not least, xstate uses strings to represent states
+everywhere, but in clj/cljs we tend to use keywords instead.</li>
+</ul>
+<h2 id="unsupported-xstatescxml-features">
+  Unsupported XState/SCXML Features
+  <a class="anchor" href="#unsupported-xstatescxml-features">#</a>
+</h2>
+<ul>
+<li>invoking another machine/promise/actor</li>
+<li>final states &amp; done signals</li>
+<li>history states</li>
+</ul>
+<p>These features may be implemented in the future.</p>
+<h2 id="different-structure-for-the-state-map">
+  Different structure for the state map
+  <a class="anchor" href="#different-structure-for-the-state-map">#</a>
+</h2>
+<p>In xstate, the state object has two keys <code>value</code> and <code>context</code></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-js" data-lang="js">{
+  <span style="color:#a6e22e">value</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;waiting&#34;</span>,
+  <span style="color:#a6e22e">context</span><span style="color:#f92672">:</span> {
+    <span style="color:#a6e22e">user</span><span style="color:#f92672">:</span>   <span style="color:#e6db74">&#34;jack&#34;</span>,
+    <span style="color:#a6e22e">backoff</span><span style="color:#f92672">:</span> <span style="color:#ae81ff">3000</span>
+  }
+}
+</code></pre></div><p>But in clj-statecharts the state map is a flat map:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">{<span style="color:#e6db74">:_state</span> <span style="color:#e6db74">:waiting</span>
+ <span style="color:#e6db74">:user</span>   <span style="color:#e6db74">&#34;jack&#34;</span>
+ <span style="color:#e6db74">:backoff</span> <span style="color:#ae81ff">3000</span>}
+</code></pre></div><p>In the state map, any underscored key (e.g. <code>_state</code>) is internal to
+clj-statecharts, which means your application code should not modify it (e.g. in an
+context function). The others are the application specific data (equivalent to the
+&ldquo;context&rdquo; of xstate).</p>
+<p>The reason behind this is that after using the xstate-like two-level map structure
+in some real world projects, it&rsquo;s obvious that the two-level map is hard to
+integrate into an existing project, e.g. putting the state inside a re-frame db.</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+  <div>
+    <a class="flex align-center" href="https://github.com/lucywang000/clj-statecharts/blob/master/docs/content//docs/xstate.md" target="_blank" rel="noopener">
+      <img src="/clj-statecharts/svg/edit.svg" class="book-icon" alt="Edit" />
+      <span>Edit this page</span>
+    </a>
+  </div>
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#why-not-use-xstate-in-cljs">Why not use XState in CLJS?</a></li>
+    <li><a href="#unsupported-xstatescxml-features">Unsupported XState/SCXML Features</a></li>
+    <li><a href="#different-structure-for-the-state-map">Different structure for the state map</a></li>
+  </ul>
+</nav>
+
+ 
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

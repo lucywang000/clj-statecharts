@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" dir=>
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Guarded Transitions #  Use Guarded Transitions #  Also called &ldquo;conditional transitions&rdquo;.
+When an event happens, the target state may depend on some condition.
+To express this, add a :guard key in the transition map.
+ The first transition that has is condition met is selected. If none is selected, the event is ignored.  (defn my-condition-fn [state event] ;; returns a boolean ) ;; Part of the machine definition {:states {:s1 {:on {:some-event [{:target :s2 :guard my-condition-fn :actions some-action} {:target :s3}]}}}} If my-condition-fn returns true, then the target is :s2.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Guarded Transitions" />
+<meta property="og:description" content="Guarded Transitions #  Use Guarded Transitions #  Also called &ldquo;conditional transitions&rdquo;.
+When an event happens, the target state may depend on some condition.
+To express this, add a :guard key in the transition map.
+ The first transition that has is condition met is selected. If none is selected, the event is ignored.  (defn my-condition-fn [state event] ;; returns a boolean ) ;; Part of the machine definition {:states {:s1 {:on {:some-event [{:target :s2 :guard my-condition-fn :actions some-action} {:target :s3}]}}}} If my-condition-fn returns true, then the target is :s2." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lucywang000.github.io/clj-statecharts/docs/guards/" />
+
+<title>Guarded Transitions | clj-statecharts</title>
+<link rel="manifest" href="/clj-statecharts/manifest.json">
+<link rel="icon" href="/clj-statecharts/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/clj-statecharts/book.min.6cd8553a6854f4812343f0f0c8baca31271e686434f381fbe3c7226f66639176.css" integrity="sha256-bNhVOmhU9IEjQ/DwyLrKMSceaGQ084H748cib2ZjkXY=">
+<script defer src="/clj-statecharts/en.search.min.76bb5410c7b23374b230ec7a4c104f12eff93abf45a6cac9cee125f02e0791dc.js" integrity="sha256-drtUEMeyM3SyMOx6TBBPEu/5Or9FpsrJzuEl8C4Hkdw="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir=>
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      
+  <nav>
+<h2 class="book-brand">
+  <a href="/clj-statecharts"><span>clj-statecharts</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  <ul>
+<li><a href="/clj-statecharts/">Introduction</a></li>
+<li><a href="/clj-statecharts/docs/get-started/">Get Started</a></li>
+<li><a href="/clj-statecharts/docs/concepts/">Concepts: Machine, State, Service</a></li>
+<li><a href="/clj-statecharts/docs/actions/">Actions</a></li>
+<li><a href="/clj-statecharts/docs/transitions/">Transitions</a></li>
+<li><a href="/clj-statecharts/docs/hierarchical-states/">Hierarchical States</a></li>
+<li><a href="/clj-statecharts/docs/parallel-states/">Parallel States</a></li>
+<li><a href="/clj-statecharts/docs/identifying-states/">Identifying States</a></li>
+<li><a href="/clj-statecharts/docs/guards/"class=active>Guarded Transitions</a></li>
+<li><a href="/clj-statecharts/docs/delayed/">Delayed Transitions</a></li>
+<li>Integration
+<ul>
+<li><a href="/clj-statecharts/docs/integration/re-frame/">Re-frame integration</a></li>
+</ul>
+</li>
+<li>Internals
+<ul>
+<li><a href="/clj-statecharts/docs/xstate/">Difference from XState</a></li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script>
+
+
+ 
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/clj-statecharts/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Guarded Transitions</strong>
+
+  <label for="toc-control">
+    
+    <img src="/clj-statecharts/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#use-guarded-transitions">Use Guarded Transitions</a></li>
+  </ul>
+</nav>
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="guarded-transitions">
+  Guarded Transitions
+  <a class="anchor" href="#guarded-transitions">#</a>
+</h1>
+<h2 id="use-guarded-transitions">
+  Use Guarded Transitions
+  <a class="anchor" href="#use-guarded-transitions">#</a>
+</h2>
+<p>Also called &ldquo;conditional transitions&rdquo;.</p>
+<p>When an event happens, the target state may depend on some condition.</p>
+<p>To express this, add a <code>:guard</code> key in the transition map.</p>
+<ul>
+<li>The first transition that has is condition met is selected.</li>
+<li>If none is selected, the event is ignored.</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defn </span>my-condition-fn [state event]
+  <span style="color:#75715e">;; returns a boolean</span>
+  )
+
+<span style="color:#75715e">;; Part of the machine definition</span>
+{<span style="color:#e6db74">:states</span>
+  {<span style="color:#e6db74">:s1</span> {<span style="color:#e6db74">:on</span>
+        {<span style="color:#e6db74">:some-event</span> [{<span style="color:#e6db74">:target</span> <span style="color:#e6db74">:s2</span>
+                       <span style="color:#e6db74">:guard</span> my-condition-fn
+                       <span style="color:#e6db74">:actions</span> some-action}
+                      {<span style="color:#e6db74">:target</span> <span style="color:#e6db74">:s3</span>}]}}}}
+</code></pre></div><p>If <code>my-condition-fn</code> returns true, then the target is <code>:s2</code>. Otherwise the target would be <code>:s3</code>.</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+  <div>
+    <a class="flex align-center" href="https://github.com/lucywang000/clj-statecharts/blob/master/docs/content//docs/guards.md" target="_blank" rel="noopener">
+      <img src="/clj-statecharts/svg/edit.svg" class="book-icon" alt="Edit" />
+      <span>Edit this page</span>
+    </a>
+  </div>
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#use-guarded-transitions">Use Guarded Transitions</a></li>
+  </ul>
+</nav>
+
+ 
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

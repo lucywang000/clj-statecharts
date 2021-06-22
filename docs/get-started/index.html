@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en" dir=>
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Get Started #  Installation #  Add the dep to to your project.clj/deps.edn/shadow-cljs.edn: 
+The below document assumes you have a require statement like this:
+(require &#39;[statecharts.core :as fsm]) Two layers of APIs #  There are two layers of APIs in clj-statecharts:
+ The Immutable API that deals with machines and states directly. This layer is purely functional. The Service API are the higher level one. It is built on top of the immutable API, stateful and easier to get started.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Get Started" />
+<meta property="og:description" content="Get Started #  Installation #  Add the dep to to your project.clj/deps.edn/shadow-cljs.edn: 
+The below document assumes you have a require statement like this:
+(require &#39;[statecharts.core :as fsm]) Two layers of APIs #  There are two layers of APIs in clj-statecharts:
+ The Immutable API that deals with machines and states directly. This layer is purely functional. The Service API are the higher level one. It is built on top of the immutable API, stateful and easier to get started." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lucywang000.github.io/clj-statecharts/docs/get-started/" />
+
+<title>Get Started | clj-statecharts</title>
+<link rel="manifest" href="/clj-statecharts/manifest.json">
+<link rel="icon" href="/clj-statecharts/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/clj-statecharts/book.min.6cd8553a6854f4812343f0f0c8baca31271e686434f381fbe3c7226f66639176.css" integrity="sha256-bNhVOmhU9IEjQ/DwyLrKMSceaGQ084H748cib2ZjkXY=">
+<script defer src="/clj-statecharts/en.search.min.76bb5410c7b23374b230ec7a4c104f12eff93abf45a6cac9cee125f02e0791dc.js" integrity="sha256-drtUEMeyM3SyMOx6TBBPEu/5Or9FpsrJzuEl8C4Hkdw="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir=>
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      
+  <nav>
+<h2 class="book-brand">
+  <a href="/clj-statecharts"><span>clj-statecharts</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  <ul>
+<li><a href="/clj-statecharts/">Introduction</a></li>
+<li><a href="/clj-statecharts/docs/get-started/"class=active>Get Started</a></li>
+<li><a href="/clj-statecharts/docs/concepts/">Concepts: Machine, State, Service</a></li>
+<li><a href="/clj-statecharts/docs/actions/">Actions</a></li>
+<li><a href="/clj-statecharts/docs/transitions/">Transitions</a></li>
+<li><a href="/clj-statecharts/docs/hierarchical-states/">Hierarchical States</a></li>
+<li><a href="/clj-statecharts/docs/parallel-states/">Parallel States</a></li>
+<li><a href="/clj-statecharts/docs/identifying-states/">Identifying States</a></li>
+<li><a href="/clj-statecharts/docs/guards/">Guarded Transitions</a></li>
+<li><a href="/clj-statecharts/docs/delayed/">Delayed Transitions</a></li>
+<li>Integration
+<ul>
+<li><a href="/clj-statecharts/docs/integration/re-frame/">Re-frame integration</a></li>
+</ul>
+</li>
+<li>Internals
+<ul>
+<li><a href="/clj-statecharts/docs/xstate/">Difference from XState</a></li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script>
+
+
+ 
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/clj-statecharts/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Get Started</strong>
+
+  <label for="toc-control">
+    
+    <img src="/clj-statecharts/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#installation">Installation</a></li>
+    <li><a href="#two-layers-of-apis">Two layers of APIs</a>
+      <ul>
+        <li><a href="#the-immutable-api">Part 1. The Immutable API</a>
+          <ul>
+            <li><a href="#fsminitialize-machine">(fsm/initialize machine)</a></li>
+            <li><a href="#fsmtransition-machine-state-event">(fsm/transition machine state event)</a></li>
+          </ul>
+        </li>
+        <li><a href="#the-service-api">Part 2. The Service API</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="get-started">
+  Get Started
+  <a class="anchor" href="#get-started">#</a>
+</h1>
+<h2 id="installation">
+  Installation
+  <a class="anchor" href="#installation">#</a>
+</h2>
+<p>Add the dep to to your project.clj/deps.edn/shadow-cljs.edn: <a href="https://clojars.org/clj-statecharts"><img src="https://img.shields.io/clojars/v/clj-statecharts.svg" alt="Clojars Project" /></a></p>
+<p>The below document assumes you have a <code>require</code> statement like this:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#a6e22e">require</span> <span style="color:#f92672">&#39;</span>[statecharts.core <span style="color:#e6db74">:as</span> fsm])
+</code></pre></div><h2 id="two-layers-of-apis">
+  Two layers of APIs
+  <a class="anchor" href="#two-layers-of-apis">#</a>
+</h2>
+<p>There are two layers of APIs in clj-statecharts:</p>
+<ul>
+<li>The <strong>Immutable API</strong> that deals with machines and states
+directly. This layer is purely functional.</li>
+<li>The <strong>Service API</strong> are the higher level one. It is built on top of
+the immutable API, stateful and easier to get started.</li>
+</ul>
+<h3 id="the-immutable-api">
+  Part 1. The Immutable API
+  <a class="anchor" href="#the-immutable-api">#</a>
+</h3>
+<p>Simply define a machine, which includes:</p>
+<ul>
+<li>the states and transitions on each state</li>
+<li>the initial state value</li>
+<li>the initial context</li>
+</ul>
+<p>And use the <code>fsm/initialize</code> and <code>fsm/transition</code> functions.</p>
+
+
+
+
+    
+    
+    
+    <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure"><span style="color:#75715e">;; import proper ns</span>
+(<span style="color:#66d9ef">ns </span>statecharts-samples.basic-immuatable
+  (<span style="color:#e6db74">:require</span> [statecharts.core <span style="color:#e6db74">:as</span> fsm]))
+
+<span style="color:#75715e">;; define the machine</span>
+(<span style="color:#66d9ef">def </span>machine
+  (<span style="color:#a6e22e">fsm/machine</span>
+   {<span style="color:#e6db74">:id</span>      <span style="color:#e6db74">:lights</span>
+    <span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:red</span>
+    <span style="color:#e6db74">:context</span> nil
+    <span style="color:#e6db74">:states</span>
+    {<span style="color:#e6db74">:green</span>  {<span style="color:#e6db74">:on</span>
+              {<span style="color:#e6db74">:timer</span> {<span style="color:#e6db74">:target</span> <span style="color:#e6db74">:yellow</span>
+                       <span style="color:#e6db74">:actions</span> (<span style="color:#66d9ef">fn </span>[<span style="color:#f92672">&amp;</span> _]
+                                 (println <span style="color:#e6db74">&#34;transitioned to :yellow!&#34;</span>))
+                       }}}
+     <span style="color:#e6db74">:yellow</span> {<span style="color:#e6db74">:on</span>
+              {<span style="color:#e6db74">:timer</span> <span style="color:#e6db74">:red</span>}}
+     <span style="color:#e6db74">:red</span>    {<span style="color:#e6db74">:on</span>
+              {<span style="color:#e6db74">:timer</span> <span style="color:#e6db74">:green</span>}}}
+
+    <span style="color:#e6db74">:on</span> {<span style="color:#e6db74">:power-outage</span> <span style="color:#e6db74">:red</span>}
+    }))
+
+(<span style="color:#66d9ef">def </span>s1 (<span style="color:#a6e22e">fsm/initialize</span> machine)) <span style="color:#75715e">; {:_state :red}</span>
+
+(<span style="color:#66d9ef">def </span>s2 (<span style="color:#a6e22e">fsm/transition</span> machine s1 {<span style="color:#e6db74">:type</span> <span style="color:#e6db74">:timer</span>})) <span style="color:#75715e">; {:_state :green}</span>
+
+(<span style="color:#66d9ef">def </span>s3 (<span style="color:#a6e22e">fsm/transition</span> machine s2 {<span style="color:#e6db74">:type</span> <span style="color:#e6db74">:timer</span>})) <span style="color:#75715e">; {:_state :yellow}</span></code></pre></div>
+
+
+<h4 id="fsminitialize-machine">
+  (fsm/initialize machine)
+  <a class="anchor" href="#fsminitialize-machine">#</a>
+</h4>
+<p>Returns the initial state of the machine. It also executes all the entry actions of
+the initial states, if any.</p>
+<p>If you do not want these actions to be executed, use <code>(fsm/initialize machine {:exec false})</code> instead. The action functions would be collected in the <code>_actions</code>
+key of the new state map. For example, the test code of clj-statecharts uses this
+feature to make assertions to ensure correct actions are collected during
+transitions.</p>
+<h4 id="fsmtransition-machine-state-event">
+  (fsm/transition machine state event)
+  <a class="anchor" href="#fsmtransition-machine-state-event">#</a>
+</h4>
+<p>Returns the next state based the current state &amp; event. It also executes all the
+entry/exit/transition actions.</p>
+<p>If you do not want these actions to be executed, use <code>(fsm/transition machine state event {:exec false})</code> instead.</p>
+<h3 id="the-service-api">
+  Part 2. The Service API
+  <a class="anchor" href="#the-service-api">#</a>
+</h3>
+<p>The immutable API provides a clean interface so you can integrate it
+into your own state management system like re-frame.</p>
+<p>However, sometimes it&rsquo;s more convenient to provide a higher level API
+that could manage the state out of the box. Here comes the service API.</p>
+<p>The usage pattern for the service API is very simple:</p>
+<ul>
+<li>Define a machine</li>
+<li>Define a service that runs the machine</li>
+<li>Send events to trigger transitions on this machine.</li>
+<li>Use functions like <code>fsm/state</code> or <code>fsm/value</code> to get the state of the service.</li>
+</ul>
+
+
+
+
+    
+    
+    
+    <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure"><span style="color:#75715e">;; import proper ns</span>
+(<span style="color:#66d9ef">ns </span>statecharts-samples.basic
+  (<span style="color:#e6db74">:require</span> [statecharts.core <span style="color:#e6db74">:as</span> fsm]))
+
+<span style="color:#75715e">;; define the machine</span>
+(<span style="color:#66d9ef">def </span>machine
+  (<span style="color:#a6e22e">fsm/machine</span>
+    {<span style="color:#e6db74">:id</span>      <span style="color:#e6db74">:lights</span>
+     <span style="color:#e6db74">:initial</span> <span style="color:#e6db74">:red</span>
+     <span style="color:#e6db74">:context</span> nil
+     <span style="color:#e6db74">:states</span>
+     {<span style="color:#e6db74">:green</span>  {<span style="color:#e6db74">:on</span>
+               {<span style="color:#e6db74">:timer</span> {<span style="color:#e6db74">:target</span>  <span style="color:#e6db74">:yellow</span>
+                        <span style="color:#e6db74">:actions</span> (<span style="color:#66d9ef">fn </span>[<span style="color:#f92672">&amp;</span> _]
+                                   (println <span style="color:#e6db74">&#34;transitioned to :yellow!&#34;</span>))
+                       }}}
+      <span style="color:#e6db74">:yellow</span> {<span style="color:#e6db74">:on</span>
+               {<span style="color:#e6db74">:timer</span> <span style="color:#e6db74">:red</span>}}
+      <span style="color:#e6db74">:red</span>    {<span style="color:#e6db74">:on</span>
+               {<span style="color:#e6db74">:timer</span> <span style="color:#e6db74">:green</span>}}}
+
+     <span style="color:#e6db74">:on</span>      {<span style="color:#e6db74">:power-outage</span> <span style="color:#e6db74">:red</span>}
+    }))
+
+<span style="color:#75715e">;; define the service</span>
+(<span style="color:#66d9ef">def </span>service (<span style="color:#a6e22e">fsm/service</span> machine))
+
+<span style="color:#75715e">;; start the service</span>
+(<span style="color:#a6e22e">fsm/start</span> service)
+
+<span style="color:#75715e">;; prints :red</span>
+(println (<span style="color:#a6e22e">fsm/value</span> service))
+
+<span style="color:#75715e">;; send events to trigger transitions  </span>
+(<span style="color:#a6e22e">fsm/send</span> service <span style="color:#e6db74">:timer</span>)
+
+<span style="color:#75715e">;; prints :green</span>
+(println (<span style="color:#a6e22e">fsm/value</span> service))
+
+(<span style="color:#a6e22e">fsm/send</span> service <span style="color:#e6db74">:timer</span>)
+<span style="color:#75715e">;; prints :yellow</span>
+(println (<span style="color:#a6e22e">fsm/value</span> service))</code></pre></div>
+
+
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+  <div>
+    <a class="flex align-center" href="https://github.com/lucywang000/clj-statecharts/blob/master/docs/content//docs/get-started.md" target="_blank" rel="noopener">
+      <img src="/clj-statecharts/svg/edit.svg" class="book-icon" alt="Edit" />
+      <span>Edit this page</span>
+    </a>
+  </div>
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#installation">Installation</a></li>
+    <li><a href="#two-layers-of-apis">Two layers of APIs</a>
+      <ul>
+        <li><a href="#the-immutable-api">Part 1. The Immutable API</a>
+          <ul>
+            <li><a href="#fsminitialize-machine">(fsm/initialize machine)</a></li>
+            <li><a href="#fsmtransition-machine-state-event">(fsm/transition machine state event)</a></li>
+          </ul>
+        </li>
+        <li><a href="#the-service-api">Part 2. The Service API</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+ 
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
