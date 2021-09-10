@@ -65,3 +65,13 @@
         (advance-clock 500)
         (is-x 3))
       ))
+
+(deftest test-transition-opts
+  (let [machine (fsm/machine {:id :foo
+                              :initial :foo
+                              :states {:foo {:on {:foo-event {:target :bar}}}
+                                       :bar {:on {:bar-event {:target :foo}}}}})
+        svc (fsm/service machine {:transition-opts {:ignore-unknown-event? true}})]
+    (fsm/start svc)
+    (testing "error is not thrown when ignore-unknown-event? flag is set"
+      (is (= :foo (:_state (fsm/send svc :bar-event)))))))
