@@ -19,7 +19,8 @@
 (deftype Service [^:volatile-mutable fsm
                   state
                   ^:volatile-mutable running
-                  clock]
+                  clock
+                  transition-opts]
   IService
   (start [this]
     (when-not running
@@ -28,7 +29,7 @@
       (reset! state (impl/initialize fsm))
       @state))
   (send [_ event]
-    (reset! state (impl/transition fsm @state event))
+    (reset! state (impl/transition fsm @state event transition-opts))
     @state)
   (add-listener [_ id listener]
     (add-watch state id (wrap-listener listener)))
@@ -43,13 +44,15 @@
   ([fsm]
    (service fsm nil))
   ([fsm opts]
-   (let [{:keys [clock]} (merge (default-opts) opts)]
+   (let [{:keys [clock
+                 transition-opts]} (merge (default-opts) opts)]
      (Service. fsm
                ;; state
                (atom nil)
                ;; running
                false
-               clock))))
+               clock
+               transition-opts))))
 
 (defn attach-fsm-scheduler [service fsm]
   (assoc fsm :scheduler (fsm.d/make-scheduler

@@ -938,6 +938,23 @@
 
       )))
 
+(deftest test-ignore-unknown-event
+  (let [fsm (impl/machine {:id :foo
+                           :initial :foo
+                           :states {:foo {:on {:foo-event {:target :bar}}}
+                                    :bar {:on {:bar-event {:target :foo}}}}})
+        state (impl/initialize fsm)]
+    (testing "error is thrown when flag is unset"
+      (is (thrown? #?(:clj Exception
+                      :cljs js/Error)
+                   (impl/transition fsm state :bar-event))))
+    (testing "error is thrown when flag is false"
+      (is (thrown? #?(:clj Exception
+                      :cljs js/Error)
+                   (impl/transition fsm state :bar-event {:ignore-unknown-event? false}))))
+    (testing "error is not thrown when flag is true"
+      (is (= :foo (:_state (impl/transition fsm state :bar-event {:ignore-unknown-event? true})))))))
+
 (deftest test-parallel-regions-without-state
   (let [fsm (impl/machine {:id :foo
                            :type :parallel

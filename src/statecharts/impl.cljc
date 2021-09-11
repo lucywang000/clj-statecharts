@@ -734,11 +734,12 @@
         atomic-nodes (filter #(= (:type %) :atomic) configuration)
         txs (->> atomic-nodes
                  (map #(select-one-tx fsm % state event input-event)))
-        _ (when-not (->> txs
+        _ (when-not ignore-unknown-event?
+            (when-not (->> txs
                          (map first)
                          (some identity))
-            (throw (ex-info (str "fsm " (:id fsm) " got unknown event " (:type event))
-                            {:_state _state})))
+              (throw (ex-info (str "fsm " (:id fsm) " got unknown event " (:type event))
+                              {:_state _state}))))
         txs (->> txs
                  (map second)
                  (remove nil?))]
