@@ -166,6 +166,10 @@
      [:map
       [:path any?]
       [:transition-event {:optional true} keyword?]
+      [:initialize-event {:optional true} keyword?]]]
+    [:re-frame-multi {:optional true}
+     [:map
+      [:transition-event {:optional true} keyword?]
       [:initialize-event {:optional true} keyword?]]]]])
 
 (def T_Machine
@@ -225,26 +229,26 @@
        (= (some-> (:action action) namespace) "fsm")))
 
 (defn- execute-internal-action
-  [{:as _fsm :keys [scheduler]}
+  [fsm
    state
    transition-event
    {:as internal-action :keys [action event event-delay]}]
-  (when-not scheduler
-    (throw (ex-info
-               "Delayed fsm without scheduler configured"
-             {:action internal-action})))
-  (cond
-    (= action :fsm/schedule-event)
-    (let [event-delay (if (int? event-delay)
-                        event-delay
-                        (event-delay state transition-event))]
-      (fsm.d/schedule scheduler event event-delay))
+  (let [scheduler (or (:scheduler state) (:scheduler fsm))]
+    (when-not scheduler
+      (throw (ex-info
+              "Delayed fsm without scheduler configured"
+              {:action internal-action})))
+    (case action
+      :fsm/schedule-event
+      (let [event-delay (if (int? event-delay)
+                          event-delay
+                          (event-delay state transition-event))]
+        (fsm.d/schedule scheduler event event-delay))
 
-    (= action :fsm/unschedule-event)
-    (fsm.d/unschedule scheduler event)
+      :fsm/unschedule-event
+      (fsm.d/unschedule scheduler event)
 
-    :else
-    (throw (ex-info (str "Unknown internal action " action) internal-action))))
+      (throw (ex-info (str "Unknown internal action " action) internal-action)))))
 
 (defn- execute
   "Execute the actions/entry/exit functions when transitioning."
