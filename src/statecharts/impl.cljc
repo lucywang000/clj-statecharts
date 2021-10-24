@@ -166,10 +166,6 @@
      [:map
       [:path any?]
       [:transition-event {:optional true} keyword?]
-      [:initialize-event {:optional true} keyword?]]]
-    [:re-frame-multi {:optional true}
-     [:map
-      [:transition-event {:optional true} keyword?]
       [:initialize-event {:optional true} keyword?]]]]])
 
 (def T_Machine

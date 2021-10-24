@@ -24,43 +24,53 @@
   (fn []
     (rf/dispatch [::call-fx effects])))
 
-(defn rf-transition-scheduler [transition-event transition-data clock]
+(defn rf-transition-scheduler [path-data clock]
   (fsm.d/make-scheduler (fn [delay-event & _more]
-                          (rf/dispatch [transition-event delay-event transition-data]))
+                          (rf/dispatch [::transition delay-event path-data]))
                         clock))
 
 (defn default-opts []
   {:clock (clock/wall-clock)})
 
-(defn integrate
-  ([machine]
-   (integrate machine default-opts))
-  ([{:keys [integrations] :as machine} {:keys [clock] :or {clock (clock/wall-clock)}}]
-   (let [{:keys [initialize-event transition-event]} (:re-frame-multi integrations)]
-     (when initialize-event
-       (rf/reg-event-db
-        initialize-event
-        (fn [db [_ {:keys [state-path] :as transition-data} initialize-args]]
-          ;; the context holds its own scheduler, which dispatches back with the
-          ;; same transition-data
-          (let [scheduler (rf-transition-scheduler transition-event transition-data clock)
-                initialize-args (assoc-in initialize-args [:context :scheduler] scheduler)]
-            (assoc-in db (u/ensure-vector state-path)
-                      (fsm/initialize machine initialize-args))))))
+(defn log [msg]
+  #?(:cljs
+     (when ^boolean goog.DEBUG
+       (js/console.log msg)))
+  #?(:clj
+     (println msg)))
 
-     (when transition-event
-       (rf/reg-event-db
-        transition-event
-        (fn [db [_ fsm-event {:keys [state-path] :as transition-data} data & more-data]]
-          (when-not state-path
-            (throw (ex-info "cannot transition without :state-path" transition-data)))
-          (let [fsm-event  (u/ensure-event-map fsm-event)
-                state-path (u/ensure-vector state-path)
-                state      (get-in db state-path)]
-            (update-in db state-path
-                       (fn [state]
-                         (fsm/transition machine state
-                                         (cond-> (assoc fsm-event :data data)
-                                           (some? more-data)
-                                           (assoc :more-data more-data)))))))))
-     machine)))
+(rf/reg-event-db
+ ::register
+ (fn [db [_ fsm-path fsm]]
+   (assoc-in db fsm-path fsm)))
+
+(rf/reg-event-db
+ ::initialize
+ (fn [db [_ {:keys [fsm-path state-path clock] :as path-data} initialize-args]]
+   (if-let [machine (get-in db (u/ensure-vector fsm-path))]
+     ;; the context holds its own scheduler, which dispatches back with the
+     ;; same path-data
+     (let [scheduler       (rf-transition-scheduler path-data (or clock (clock/wall-clock)))
+           initialize-args (assoc-in initialize-args [:context :scheduler] scheduler)]
+       (assoc-in db (u/ensure-vector state-path)
+                 (fsm/initialize machine initialize-args)))
+     ;; the machine itself can't be found, so ignore transitions
+     (log (str "fsm not found at " fsm-path)))))
+
+(rf/reg-event-db
+ ::transition
+ (fn [db [_ fsm-event {:keys [fsm-path state-path] :as path-data} data & more-data]]
+   (when-not (and fsm-path state-path)
+     (throw (ex-info "cannot transition without :fsm-path and :state-path" path-data)))
+   (if-let [machine (get-in db (u/ensure-vector fsm-path))]
+     (let [fsm-event  (u/ensure-event-map fsm-event)
+           state-path (u/ensure-vector state-path)
+           state      (get-in db state-path)]
+       (update-in db state-path
+                  (fn [state]
+                    (fsm/transition machine state
+                                    (cond-> (assoc fsm-event :data data)
+                                      (some? more-data)
+                                      (assoc :more-data more-data))))))
+     ;; the machine itself can't be found, so ignore transitions
+     (log (str "fsm not found at " fsm-path)))))
