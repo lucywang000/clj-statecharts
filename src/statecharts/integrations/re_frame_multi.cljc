@@ -1,6 +1,7 @@
 (ns statecharts.integrations.re-frame-multi
   "Integration with re-frame, allowing one machine to manage multiple states."
   (:require [re-frame.core :as rf]
+            [re-frame.utils :as rf.utils]
             [statecharts.core :as fsm]
             [statecharts.clock :as clock]
             [statecharts.utils :as u]
@@ -48,6 +49,11 @@
  (fn [db [_ fsm-path]]
    (update-in db (u/ensure-vector fsm-path) #(update % :_epoch inc))))
 
+(rf/reg-event-db
+ ::unregister
+ (fn [db [_ fsm-path]]
+   (rf.utils/dissoc-in db (u/ensure-vector fsm-path))))
+
 (rf/reg-event-fx
  ::initialize
  (fn [{:keys [db]} [_ {:keys [fsm-path state-path clock] :as path-data} initialize-args]]
@@ -91,3 +97,8 @@
                                          (cond-> (assoc fsm-event :data data)
                                            (seq more-data)
                                            (assoc :more-data more-data)))))}))))
+
+(rf/reg-event-db
+ ::discard-state
+ (fn [db [_ state-path]]
+   (rf.utils/dissoc-in db (u/ensure-vector state-path))))
