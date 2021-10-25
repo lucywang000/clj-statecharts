@@ -41,8 +41,13 @@
 
 (rf/reg-event-db
  ::register
- (fn [db [_ fsm-path fsm]]
-   (assoc-in db fsm-path fsm)))
+ (fn [db [_ fsm-path machine]]
+   (assoc-in db (u/ensure-vector fsm-path) (assoc machine :_epoch 0))))
+
+(rf/reg-event-db
+ ::advance-epoch
+ (fn [db [_ fsm-path]]
+   (update-in db (u/ensure-vector fsm-path) #(update % :_epoch inc))))
 
 (rf/reg-event-db
  ::initialize
@@ -51,7 +56,9 @@
      ;; the context holds its own scheduler, which dispatches back with the
      ;; same path-data
      (let [scheduler       (rf-transition-scheduler path-data (or clock (clock/wall-clock)))
-           initialize-args (assoc-in initialize-args [:context :scheduler] scheduler)]
+           initialize-args (update initialize-args :context assoc
+                                   :scheduler scheduler
+                                   :_epoch (:_epoch machine))]
        (assoc-in db (u/ensure-vector state-path)
                  (fsm/initialize machine initialize-args)))
      ;; the machine itself can't be found, so ignore transitions
@@ -66,11 +73,15 @@
      (let [fsm-event  (u/ensure-event-map fsm-event)
            state-path (u/ensure-vector state-path)
            state      (get-in db state-path)]
-       (update-in db state-path
-                  (fn [state]
-                    (fsm/transition machine state
-                                    (cond-> (assoc fsm-event :data data)
-                                      (some? more-data)
-                                      (assoc :more-data more-data))))))
+       (if (> (:_epoch machine) (:_epoch state))
+         (do
+           (log (str "Ignored event in new epoch. event-type=" (:type fsm-event) " fsm-path=" fsm-path))
+           db)
+         (update-in db state-path
+                    (fn [state]
+                      (fsm/transition machine state
+                                      (cond-> (assoc fsm-event :data data)
+                                        (some? more-data)
+                                        (assoc :more-data more-data)))))))
      ;; the machine itself can't be found, so ignore transitions
      (log (str "fsm not found at " fsm-path)))))
