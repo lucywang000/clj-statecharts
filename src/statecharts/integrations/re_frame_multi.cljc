@@ -62,21 +62,33 @@
    #?(:clj
       (println msg))))
 
+;; Register a `machine`, storing it in the app-db at `fsm-path`. After
+;; registration, the machine can be used in `::initialize` and `::transition`.
 (rf/reg-event-db
  ::register
  (fn [db [_ fsm-path machine]]
    (assoc-in db (u/ensure-vector fsm-path) (assoc machine :_epoch 0))))
 
+;; Advance a machine's epoch. After this, transitions related to states created in
+;; earlier epochs will be dropped.
 (rf/reg-event-db
  ::advance-epoch
  (fn [db [_ fsm-path]]
    (update-in db (u/ensure-vector fsm-path) #(update % :_epoch inc))))
 
+;; Un-register a machine. Any transitions related to this machine will be dropped,
+;; unless it is re-registered at the same `fsm-path`.
 (rf/reg-event-db
  ::unregister
  (fn [db [_ fsm-path]]
    (rf.utils/dissoc-in db (u/ensure-vector fsm-path))))
 
+;; Initialize a state using the machine saved at `fsm-path`. Save the state at the
+;; `state-path`. The `initialize-args` are as per `statecharts.core/initialize`.
+;;
+;; In most cases, the `initialize-args` will include a `:context` (the initial
+;; value of the state) that contains re-frame event vectors. The machine will
+;; dispatch these event vectors as actions. See [[dispatch-callback]].
 (rf/reg-event-fx
  ::initialize
  (fn [{:keys [db]} [_ {:keys [fsm-path state-path clock] :as path-data} initialize-args]]
@@ -94,6 +106,8 @@
                                      :_epoch (:_epoch machine))]
          {:db (assoc-in db state-path (fsm/initialize machine initialize-args))})))))
 
+;; Transition the state stored at `state-path`, using the machine stored at
+;; `fsm-path`, with the event `fsm-event`, optionally passing additional `data`.
 (rf/reg-event-fx
  ::transition
  (fn [{:keys [db]} [_ fsm-event {:keys [fsm-path state-path]} data & more-data]]
@@ -121,6 +135,8 @@
                                            (seq more-data)
                                            (assoc :more-data more-data)))))}))))
 
+;; Discard the state stored at `state-path`. Future transitions related to this
+;; `state` (e.g. delayed transitions) will be ignored.
 (rf/reg-event-db
  ::discard-state
  (fn [db [_ state-path]]
