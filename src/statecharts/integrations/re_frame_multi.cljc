@@ -30,6 +30,29 @@
 (defn default-opts []
   {:clock (clock/wall-clock)})
 
+(defn dispatch-callback
+  "A utility for building state machine actions. Will dispatch an event vector
+  stored in the state context at `event-vector-path`, appending the current state
+  and event to the vector.
+
+  ```clojure
+  (defn machine
+    {:id      :my-fsm
+     :initial :init
+     :states  {:init {:entry (fsm.rf/dispatch-callback [:callbacks :on-init])}}})
+  (rf/dispatch [::fsm.rf/register fsm-path (fsm/machine machine)])
+
+  (rf/dispatch [::fsm.rf/initialize
+                transition-data
+                {:context {:callbacks {:on-init [:some/callback]}}}])
+  ;; => dispatches [:some/callback state event]
+  ```"
+  [event-vector-path]
+  (let [path (u/ensure-vector event-vector-path)]
+    (fn [state event]
+      (when-let [event-vector (and (seq path) (get-in state path))]
+        (rf/dispatch (vec (concat event-vector [state event])))))))
+
 (rf/reg-fx
  ::log
  (fn [msg]
