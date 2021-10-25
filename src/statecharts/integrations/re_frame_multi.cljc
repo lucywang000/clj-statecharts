@@ -7,10 +7,7 @@
             [statecharts.delayed :as fsm.d]
             [statecharts.service :as service]))
 
-(rf/reg-event-fx
- ::call-fx
- (fn [_ [_ fx]]
-   fx))
+(rf/reg-event-fx ::call-fx (fn [_ [_ fx]] fx))
 
 (defn call-fx
   "Dispatch the provided effects."
@@ -32,12 +29,14 @@
 (defn default-opts []
   {:clock (clock/wall-clock)})
 
-(defn log [msg]
-  #?(:cljs
-     (when ^boolean goog.DEBUG
-       (js/console.log msg)))
-  #?(:clj
-     (println msg)))
+(rf/reg-fx
+ ::log
+ (fn [msg]
+   #?(:cljs
+      (when ^boolean goog.DEBUG
+        (js/console.log msg)))
+   #?(:clj
+      (println msg))))
 
 (rf/reg-event-db
  ::register
@@ -49,39 +48,46 @@
  (fn [db [_ fsm-path]]
    (update-in db (u/ensure-vector fsm-path) #(update % :_epoch inc))))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  ::initialize
- (fn [db [_ {:keys [fsm-path state-path clock] :as path-data} initialize-args]]
-   (if-let [machine (get-in db (u/ensure-vector fsm-path))]
-     ;; the context holds its own scheduler, which dispatches back with the
-     ;; same path-data
-     (let [scheduler       (rf-transition-scheduler path-data (or clock (clock/wall-clock)))
-           initialize-args (update initialize-args :context assoc
-                                   :scheduler scheduler
-                                   :_epoch (:_epoch machine))]
-       (assoc-in db (u/ensure-vector state-path)
-                 (fsm/initialize machine initialize-args)))
-     ;; the machine itself can't be found, so ignore transitions
-     (log (str "fsm not found at " fsm-path)))))
+ (fn [{:keys [db]} [_ {:keys [fsm-path state-path clock] :as path-data} initialize-args]]
+   (let [fsm-path   (u/ensure-vector fsm-path)
+         state-path (u/ensure-vector state-path)
+         machine    (get-in db fsm-path)]
+     (if (not machine)
+       {::log (str "FSM not found. fsm-path=" fsm-path)
+        :db   db}
+       ;; the context holds its own scheduler, which dispatches back with the
+       ;; same path-data
+       (let [scheduler       (rf-transition-scheduler path-data (or clock (clock/wall-clock)))
+             initialize-args (update initialize-args :context assoc
+                                     :scheduler scheduler
+                                     :_epoch (:_epoch machine))]
+         {:db (assoc-in db state-path (fsm/initialize machine initialize-args))})))))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  ::transition
- (fn [db [_ fsm-event {:keys [fsm-path state-path] :as path-data} data & more-data]]
-   (when-not (and fsm-path state-path)
-     (throw (ex-info "cannot transition without :fsm-path and :state-path" path-data)))
-   (if-let [machine (get-in db (u/ensure-vector fsm-path))]
-     (let [fsm-event  (u/ensure-event-map fsm-event)
-           state-path (u/ensure-vector state-path)
-           state      (get-in db state-path)]
-       (if (> (:_epoch machine) (:_epoch state))
-         (do
-           (log (str "Ignored event in new epoch. event-type=" (:type fsm-event) " fsm-path=" fsm-path))
-           db)
-         (update-in db state-path
-                    (fn [state]
-                      (fsm/transition machine state
-                                      (cond-> (assoc fsm-event :data data)
-                                        (some? more-data)
-                                        (assoc :more-data more-data)))))))
-     ;; the machine itself can't be found, so ignore transitions
-     (log (str "fsm not found at " fsm-path)))))
+ (fn [{:keys [db]} [_ fsm-event {:keys [fsm-path state-path]} data & more-data]]
+   (let [fsm-event  (u/ensure-event-map fsm-event)
+         fsm-path   (u/ensure-vector fsm-path)
+         state-path (u/ensure-vector state-path)
+         machine    (get-in db fsm-path)
+         state      (get-in db state-path)
+         error      (cond
+                      (not machine)
+                      (str "FSM not found. fsm-path=" fsm-path)
+
+                      (not state)
+                      (str "State not found. state-path=" state-path)
+
+                      (> (:_epoch machine) (:_epoch state))
+                      (str "Ignored event in new epoch. event-type=" (:type fsm-event) " fsm-path=" fsm-path " state-path=" state-path))]
+     (if error
+       {::log error
+        :db   db}
+       {:db (update-in db state-path
+                       (fn [state]
+                         (fsm/transition machine state
+                                         (cond-> (assoc fsm-event :data data)
+                                           (seq more-data)
+                                           (assoc :more-data more-data)))))}))))
