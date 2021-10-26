@@ -229,7 +229,7 @@
    state
    transition-event
    {:as internal-action :keys [action event event-delay]}]
-  (let [scheduler (or (:scheduler state) (:scheduler fsm))]
+  (let [scheduler (or (:_scheduler state) (:scheduler fsm))]
     (when-not scheduler
       (throw (ex-info
               "Delayed fsm without scheduler configured"

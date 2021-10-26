@@ -102,7 +102,7 @@
        ;; same path-data
        (let [scheduler       (rf-transition-scheduler path-data (or clock (clock/wall-clock)))
              initialize-args (update initialize-args :context assoc
-                                     :scheduler scheduler
+                                     :_scheduler scheduler
                                      :_epoch (:_epoch machine))]
          {:db (assoc-in db state-path (fsm/initialize machine initialize-args))})))))
 
