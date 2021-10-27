@@ -86,40 +86,41 @@
          clock
          (or clock (clock/wall-clock))
 
-         {:keys [path initialize-event transition-event epoch?]}
-         (get-in machine [:integrations :re-frame])
-
-         path
-         (some-> path u/ensure-vector)]
+         {:keys [initialize-event transition-event epoch?]}
+         (get-in machine [:integrations :re-frame])]
 
      (when initialize-event
        (rf/reg-event-db
         initialize-event
-        path
-        (fn [_ [_ initialize-args]]
-          (cond-> (fsm/initialize @machine* initialize-args)
-            epoch?
-            (assoc :_epoch (new-epoch id))))))
+        db
+        (fn [_ [_ [path initialize-args]]]
+          (assoc db (u/ensure-vector path)
+                 (cond-> (fsm/initialize @machine* initialize-args)
+                   epoch?
+                   (assoc :_epoch (new-epoch id)))))))
 
      (when transition-event
        (rf/reg-event-db
         transition-event
-        path
-        (fn [db [_ fsm-event data :as args]]
-          (let [fsm-event (u/ensure-event-map fsm-event)
+        db
+        (fn [db [_ path fsm-event data :as args]]
+          (let [path (u/ensure-vector path)
+                state (get-in db path)
+                fsm-event (u/ensure-event-map fsm-event)
                 more-data (when (> (count args) 3)
                             (subvec args 2))]
-            (if (and epoch? (should-discard fsm-event (:_epoch db)))
+            (assoc-in db path
+            (if (and epoch? (should-discard fsm-event (:_epoch state)))
               (do
                 (log-discarded-event fsm-event)
-                db)
-              (fsm/transition @machine* db
+                state)
+              (fsm/transition @machine* state
                               ;; For 99% of the cases the fsm-event has 0 or 1 arg.
                               ;; The first event arg is passed in :data key of the
                               ;; event, the remaining are passed in :full-data.
                               (cond-> (assoc fsm-event :data data)
                                 (some? more-data)
-                                (assoc :more-data more-data))))))))
+                                (assoc :more-data more-data)))))))))
      (let [scheduler (make-rf-scheduler transition-event clock)]
        (vswap! machine* assoc :scheduler scheduler))
      @machine*)))
