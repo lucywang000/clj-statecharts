@@ -57,6 +57,7 @@
 (defn attach-fsm-scheduler [service fsm]
   (assoc fsm :scheduler (fsm.d/make-scheduler
                          ;; dispatch
-                         #(send service %)
+                         (fn [_state event]
+                           (send service event))
                          ;; clock
                          (.-clock ^Service service))))

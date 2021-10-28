@@ -4,13 +4,13 @@
             [statecharts.utils :as u]))
 
 (defprotocol IScheduler
-  (schedule [this event delay])
+  (schedule [this state event delay])
   (unschedule [this event]))
 
 (deftype Scheduler [dispatch ids clock]
   IScheduler
-  (schedule [_ event delay]
-    (let [id (clock/setTimeout clock #(dispatch event) delay)]
+  (schedule [_ state event delay]
+    (let [id (clock/setTimeout clock #(dispatch state event) delay)]
       (swap! ids assoc event id)))
 
   (unschedule [_ event]

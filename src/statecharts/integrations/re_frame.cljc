@@ -44,7 +44,9 @@
     (rf/dispatch [::call-fx effects])))
 
 (defn make-rf-scheduler [transition-event clock]
-  (fsm.d/make-scheduler #(rf/dispatch [transition-event %]) clock))
+  (fsm.d/make-scheduler (fn [_state event]
+                          (rf/dispatch [transition-event event]))
+                        clock))
 
 (defn default-opts []
   {:clock (clock/wall-clock)})

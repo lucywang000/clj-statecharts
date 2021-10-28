@@ -238,7 +238,7 @@
     (let [event-delay (if (int? event-delay)
                         event-delay
                         (event-delay state transition-event))]
-      (fsm.d/schedule scheduler event event-delay))
+      (fsm.d/schedule scheduler state event event-delay))
 
     (= action :fsm/unschedule-event)
     (fsm.d/unschedule scheduler event)
