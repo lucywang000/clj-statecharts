@@ -12,10 +12,11 @@ title: 'Concepts: Machine, State, Service'
 
 How is the state different from the machine?
 
-- The machine is like a **map**. A map could indicate how one could go from one
+- The machine is like a **map** (a chart of locations & directions, not a
+  clojure map data structure). A map could indicate how one could go from one
   place to another. Likewise, a machine indicates how a system could transition
   from one state to another.
-- The state is like a **place**.
+- The state is like a **place** on a map.
 
 How is a machine like a map? The map itself is not in any place. It just
 contains all the directions. Similarly, the machine itself is not in any state.
@@ -24,8 +25,8 @@ It just contains all the possible transitions.
 The state itself (mainly) contains two piece of information:
 
 - the current state value, e.g. `:connecting`, or `[:connecting :handshake]`.
-  (see [Hierarchical States]({{< relref "docs/hierarchical-states.md" >}}) for how to
-  represent hierarchical states).
+  (see [Hierarchical States]({{< relref "docs/hierarchical-states.md" >}}) for
+  how to represent hierarchical states).
 - the current state context, e.g. number of seconds to back off before next
   connection attempt.
 
