@@ -17,7 +17,7 @@
                  [day8.re-frame/test "0.1.5"
                   :scope "provided"
                   :exclusions [re-frame]]
-                 [metosin/malli "0.6.1"]]
+                 [metosin/malli "0.6.2"]]
 
   :deploy-repositories [["clojars" {:url           "https://clojars.org/repo"
                                     :username      :env/clojars_user
