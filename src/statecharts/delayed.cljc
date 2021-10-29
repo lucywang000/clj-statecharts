@@ -14,7 +14,7 @@
       (swap! ids assoc-in [(:_id state) event] id)))
 
   (unschedule [_ state event]
-    (when-let [id (get @ids event)]
+    (when-let [id (get-in @ids [(:_id state) event])]
       (clock/clearTimeout clock id)
       (swap! ids update (:_id state) dissoc event))))
 

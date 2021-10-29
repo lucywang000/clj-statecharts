@@ -981,6 +981,35 @@
                       1000))
   ())
 
+(deftest test-unscheduling-delayed-transitions
+  (let [clock         (fsm.sim/simulated-clock)
+        advance-clock (fn [ms]
+                        (fsm.sim/advance clock ms))
+        state         (atom nil)
+        machine       (atom
+                       (impl/machine {:id      :process
+                                      :initial :running
+                                      :states  {:running  {:after [{:delay  1000
+                                                                    :target :done}]
+                                                           :on    {:cancel :canceled}}
+                                                :canceled {}
+                                                :done     {}}}))
+
+        scheduler (fsm.d/make-scheduler (fn [_ delay-event]
+                                          (swap! state
+                                                 #(impl/transition @machine % delay-event)))
+                                        clock)]
+    (swap! machine assoc :scheduler scheduler)
+    ;; start
+    (reset! state (impl/initialize @machine))
+    ;; cancel it before it finishes
+    (advance-clock 500)
+    (swap! state #(impl/transition @machine % :cancel))
+    ;; wait until it would have finished
+    (advance-clock 500)
+    ;; it stays in canceled state, instead of moving to :done
+    (is (= (:_state @state) :canceled))))
+
 (deftest test-simultaneous-delays
   (let [clock         (fsm.sim/simulated-clock)
         advance-clock (fn [ms]
