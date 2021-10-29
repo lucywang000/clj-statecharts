@@ -57,7 +57,8 @@
 (defn attach-fsm-scheduler [service fsm]
   (assoc fsm :scheduler (fsm.d/make-scheduler
                          ;; dispatch
-                         (fn [_state event]
+                         (fn [_state event] ;; match arity of scheduler dispatch
+                           ;; _state is available but unused by this scheduler
                            (send service event))
                          ;; clock
                          (.-clock ^Service service))))
