@@ -806,8 +806,9 @@
    (initialize fsm nil))
   ([{:keys [initial type]
      :as fsm}
-    {:keys [exec debug context]
+    {:keys [exec debug id context]
      :or {exec true
+          id (u/random-uuid)
           context nil}
      :as _opts}]
    (let [context (if (some? context)
@@ -816,7 +817,7 @@
          event {:type :fsm/init}
          [_state actions] (-do-init fsm)
          state (assoc context
-                 :_id (u/random-uuid)
+                 :_id id
                  :_state _state
                  :_actions actions)]
      (if exec
