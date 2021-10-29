@@ -1,4 +1,5 @@
-(ns statecharts.utils)
+(ns statecharts.utils
+  (:refer-clojure :exclude [random-uuid]))
 
 (defn ensure-vector [x]
   (cond
