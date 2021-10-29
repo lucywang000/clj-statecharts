@@ -241,7 +241,7 @@
       (fsm.d/schedule scheduler state event event-delay))
 
     (= action :fsm/unschedule-event)
-    (fsm.d/unschedule scheduler event)
+    (fsm.d/unschedule scheduler state event)
 
     :else
     (throw (ex-info (str "Unknown internal action " action) internal-action))))
@@ -816,6 +816,7 @@
          event {:type :fsm/init}
          [_state actions] (-do-init fsm)
          state (assoc context
+                 :_id (u/random-uuid)
                  :_state _state
                  :_actions actions)]
      (if exec

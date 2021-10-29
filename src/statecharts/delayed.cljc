@@ -5,18 +5,18 @@
 
 (defprotocol IScheduler
   (schedule [this state event delay])
-  (unschedule [this event]))
+  (unschedule [this state event]))
 
 (deftype Scheduler [dispatch ids clock]
   IScheduler
   (schedule [_ state event delay]
     (let [id (clock/setTimeout clock #(dispatch state event) delay)]
-      (swap! ids assoc event id)))
+      (swap! ids assoc-in [(:_id state) event] id)))
 
-  (unschedule [_ event]
+  (unschedule [_ state event]
     (when-let [id (get @ids event)]
       (clock/clearTimeout clock id)
-      (swap! ids dissoc event))))
+      (swap! ids update (:_id state) dissoc event))))
 
 (defn scheduler? [x]
   (satisfies? IScheduler x))

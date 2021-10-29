@@ -600,7 +600,7 @@
 
         new-state (impl/transition test-machine state :e12)
         new-state2 (impl/transition test-machine new-state :e331)]
-    (is (= new-state
+    (is (= (dissoc new-state :_id)
            {:_state {:p1 :p12
                      :p2 :p23
                      :p3 {:p3.a :p3.a2
@@ -610,7 +610,7 @@
             :b 2
             :c 1
             :d 2}))
-    (is (= new-state2
+    (is (= (dissoc new-state2 :_id)
            {:_state {:p1 :p12
                      :p2 :p23
                      :p3 {:p3.a :p3.a2
@@ -681,7 +681,7 @@
                                      :p3c2.b :p3c2.b1}}}}))
         new-state (impl/transition test-machine state :e12)
         new-state3 (impl/transition test-machine state :e-331out)]
-    (is (= new-state
+    (is (= (dissoc new-state :_id)
            {:_state {:p3 {:p3.a :p3.a2
                           :p3.b :p3.b3
                           :p3.c {:p3c2 {:p3c2.a :p3c2.a1
@@ -695,7 +695,7 @@
                              :cljs js/Error)
                           #"unknown event"
                           (impl/transition test-machine state :e331)))
-    (is (= new-state3
+    (is (= (dissoc new-state3 :_id)
            {:_state [:p2 :p23]
             :a 0
             :b 0
