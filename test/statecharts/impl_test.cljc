@@ -981,7 +981,6 @@
                       1000))
   ())
 
-
 (deftest test-simultaneous-delays
   (let [clock         (fsm.sim/simulated-clock)
         advance-clock (fn [ms]
