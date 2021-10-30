@@ -7,22 +7,32 @@
   (schedule [this state event delay])
   (unschedule [this state event]))
 
-(deftype Scheduler [dispatch ids clock]
+(deftype Scheduler [context-id dispatch ids clock]
   IScheduler
   (schedule [_ state event delay]
     (let [id (clock/setTimeout clock #(dispatch state event) delay)]
-      (swap! ids assoc-in [(:_id state) event] id)))
+      (swap! ids assoc-in [(context-id state) event] id)))
 
   (unschedule [_ state event]
-    (when-let [id (get-in @ids [(:_id state) event])]
+    (when-let [id (get-in @ids [(context-id state) event])]
       (clock/clearTimeout clock id)
-      (swap! ids update (:_id state) dissoc event))))
+      (swap! ids update (context-id state) dissoc event))))
 
 (defn scheduler? [x]
   (satisfies? IScheduler x))
 
-(defn make-scheduler [dispatch clock]
-  (Scheduler. dispatch (atom {}) clock))
+(defn make-scheduler
+  ;; By default, a scheduler is not dependent on its context. That is, it expects
+  ;; to dispatch events for only one state. If the machine manages several states,
+  ;; use the arity-3 version.
+  ([dispatch clock]
+   (make-scheduler dispatch clock (constantly :context)))
+  ;; Create a scheduler that can schedule delayed events. When the `clock`
+  ;; determines it is time to invoke a delayed event, `dispatch` will be called.
+  ;; The scheduler can manage delayed events for several states simultaneously.
+  ;; Each is identified by `context-id` (a function of the state context).
+  ([dispatch clock context-id]
+   (Scheduler. context-id dispatch (atom {}) clock)))
 
 (def path-placeholder [:<path>])
 

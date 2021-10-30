@@ -1,5 +1,4 @@
-(ns statecharts.utils
-  (:refer-clojure :exclude [random-uuid]))
+(ns statecharts.utils)
 
 (defn ensure-vector [x]
   (cond
@@ -55,10 +54,3 @@
   (if (= 1 (count x))
     (first x)
     x))
-
-(defn random-uuid
-  "Generates a new random UUID. Same as `cljs.core/random-uuid` except it works
-  for Clojure as well as ClojureScript."
-  []
-  #?(:clj  (java.util.UUID/randomUUID)
-     :cljs (cljs.core/random-uuid)))
