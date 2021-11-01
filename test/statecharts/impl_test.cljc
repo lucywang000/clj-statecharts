@@ -1,5 +1,7 @@
 (ns statecharts.impl-test
   (:require [statecharts.impl :as impl :refer [assign]]
+            [statecharts.sim :as fsm.sim]
+            [statecharts.delayed :as fsm.d]
             [clojure.test :refer [deftest is are use-fixtures testing]]
             #?(:clj [kaocha.stacktrace])))
 
@@ -978,3 +980,70 @@
                                       :e12)
                       1000))
   ())
+
+(deftest test-unscheduling-delayed-transitions
+  (let [clock         (fsm.sim/simulated-clock)
+        advance-clock (fn [ms]
+                        (fsm.sim/advance clock ms))
+        state         (atom nil)
+        machine       (atom
+                       (impl/machine {:id      :process
+                                      :initial :running
+                                      :states  {:running  {:after [{:delay  1000
+                                                                    :target :done}]
+                                                           :on    {:cancel :canceled}}
+                                                :canceled {}
+                                                :done     {}}}))
+
+        scheduler (fsm.d/make-scheduler (fn [_ delay-event]
+                                          (swap! state
+                                                 #(impl/transition @machine % delay-event)))
+                                        clock)]
+    (swap! machine assoc :scheduler scheduler)
+    ;; start
+    (reset! state (impl/initialize @machine))
+    ;; cancel it before it finishes
+    (advance-clock 500)
+    (swap! state #(impl/transition @machine % :cancel))
+    ;; wait until it would have finished
+    (advance-clock 500)
+    ;; it stays in canceled state, instead of moving to :done
+    (is (= (:_state @state) :canceled))))
+
+(deftest test-simultaneous-delays
+  (let [clock         (fsm.sim/simulated-clock)
+        advance-clock (fn [ms]
+                        (fsm.sim/advance clock ms))
+        states        (atom {})
+        machine       (atom
+                       (impl/machine {:id      :process
+                                      :initial :running
+                                      :states  {:running {:after [{:delay  1000
+                                                                   :target :done}]}
+                                                :done    {}}}))
+
+        scheduler (fsm.d/make-scheduler (fn [state delay-event]
+                                          (swap! states update (:id state)
+                                                 (fn [state]
+                                                   (impl/transition @machine state delay-event))))
+                                        clock
+                                        ;; cache timeouts for each state separately
+                                        :id)]
+
+    (swap! machine assoc :scheduler scheduler)
+    ;; start one state
+    (swap! states assoc :a
+           (impl/initialize @machine {:context {:id :a}}))
+    (is (= (get-in @states [:a :_state]) :running))
+    (advance-clock 500)
+    ;; a moment later start another
+    (swap! states assoc :b
+           (impl/initialize @machine {:context {:id :b}}))
+    (advance-clock 500)
+    ;; enough time has passed for the first to be done
+    (is (= (get-in @states [:a :_state]) :done))
+    ;; but the second is still pending
+    (is (= (get-in @states [:b :_state]) :running))
+    ;; until it finishes too
+    (advance-clock 500)
+    (is (= (get-in @states [:b :_state]) :done))))
