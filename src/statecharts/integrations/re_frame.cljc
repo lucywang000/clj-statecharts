@@ -4,8 +4,9 @@
             [statecharts.core :as fsm]
             [statecharts.clock :as clock]
             [statecharts.utils :as u]
-            [statecharts.delayed :as fsm.d]
-            [statecharts.service :as service]))
+            [statecharts.scheduler :as scheduler]
+            [statecharts.service :as service]
+            [statecharts.store :as store]))
 
 (rf/reg-event-db
  ::sync-state-update
@@ -43,11 +44,18 @@
   (fn []
     (rf/dispatch [::call-fx effects])))
 
-(defn make-rf-scheduler [transition-event clock]
-  (fsm.d/make-scheduler (fn [_state event] ;; match arity of scheduler dispatch
-                          ;; _state is available but unused by this scheduler
-                          (rf/dispatch [transition-event event]))
-                        clock))
+(defn make-rf-scheduler [{:keys [path transition-event]} clock]
+  ;; re-frame's app-db is the true storage, so we need a store that delegates to
+  ;; re-frame by dispatching events. This store will not be exposed externally; it
+  ;; is used only by the scheduler, internally. Since The scheduler calls only a
+  ;; subset of the IStore protocol, the unused methods do not need to be
+  ;; implemented.
+  (let [store (reify
+                store/IStore
+                (unique-id [_this _state] path)
+                (transition [_this _machine _state event _opts]
+                  (rf/dispatch [transition-event event])))]
+    (scheduler/make-store-scheduler store clock)))
 
 (defn default-opts []
   {:clock (clock/wall-clock)})
@@ -83,14 +91,16 @@
   ([machine]
    (integrate machine default-opts))
   ([{:keys [id] :as machine} {:keys [clock]}]
-   (let [machine*
-         (volatile! machine)
-
-         clock
+   (let [clock
          (or clock (clock/wall-clock))
 
+         integration-opts (get-in machine [:integrations :re-frame])
+
+         machine
+         (assoc machine :scheduler (make-rf-scheduler integration-opts clock))
+
          {:keys [path initialize-event transition-event epoch?]}
-         (get-in machine [:integrations :re-frame])
+         integration-opts
 
          path
          (some-> path u/ensure-vector)]
@@ -100,7 +110,7 @@
         initialize-event
         path
         (fn [_ [_ initialize-args]]
-          (cond-> (fsm/initialize @machine* initialize-args)
+          (cond-> (fsm/initialize machine initialize-args)
             epoch?
             (assoc :_epoch (new-epoch id))))))
 
@@ -116,16 +126,14 @@
               (do
                 (log-discarded-event fsm-event)
                 db)
-              (fsm/transition @machine* db
+              (fsm/transition machine db
                               ;; For 99% of the cases the fsm-event has 0 or 1 arg.
                               ;; The first event arg is passed in :data key of the
                               ;; event, the remaining are passed in :full-data.
                               (cond-> (assoc fsm-event :data data)
                                 (some? more-data)
                                 (assoc :more-data more-data))))))))
-     (let [scheduler (make-rf-scheduler transition-event clock)]
-       (vswap! machine* assoc :scheduler scheduler))
-     @machine*)))
+     machine)))
 
 (defn with-epoch [event epoch]
   {:type event

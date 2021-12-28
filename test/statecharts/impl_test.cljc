@@ -1,7 +1,8 @@
 (ns statecharts.impl-test
   (:require [statecharts.impl :as impl :refer [assign]]
             [statecharts.sim :as fsm.sim]
-            [statecharts.delayed :as fsm.d]
+            [statecharts.scheduler :as fsm.scheduler]
+            [statecharts.store :as fsm.store]
             [clojure.test :refer [deftest is are use-fixtures testing]]
             #?(:clj [kaocha.stacktrace])))
 
@@ -985,68 +986,55 @@
   (let [clock         (fsm.sim/simulated-clock)
         advance-clock (fn [ms]
                         (fsm.sim/advance clock ms))
-        state         (atom nil)
-        machine       (atom
-                       (impl/machine {:id      :process
-                                      :initial :running
-                                      :states  {:running  {:after [{:delay  1000
-                                                                    :target :done}]
-                                                           :on    {:cancel :canceled}}
-                                                :canceled {}
-                                                :done     {}}}))
-
-        scheduler (fsm.d/make-scheduler (fn [_ delay-event]
-                                          (swap! state
-                                                 #(impl/transition @machine % delay-event)))
-                                        clock)]
-    (swap! machine assoc :scheduler scheduler)
+        ;; a store that manages a single state
+        state-store   (fsm.store/lone-store)
+        machine       (impl/machine
+                       {:id        :process
+                        :scheduler (fsm.scheduler/make-store-scheduler state-store clock)
+                        :initial   :running
+                        :states    {:running  {:after [{:delay  1000
+                                                        :target :done}]
+                                               :on    {:cancel :canceled}}
+                                    :canceled {}
+                                    :done     {}}})]
     ;; start
-    (reset! state (impl/initialize @machine))
+    (fsm.store/initialize state-store machine nil)
     ;; cancel it before it finishes
     (advance-clock 500)
-    (swap! state #(impl/transition @machine % :cancel))
+    (fsm.store/transition state-store machine nil :cancel {})
     ;; wait until it would have finished
     (advance-clock 500)
     ;; it stays in canceled state, instead of moving to :done
-    (is (= (:_state @state) :canceled))))
+    (is (= (:_state (fsm.store/get-state state-store nil)) :canceled))))
 
 (deftest test-simultaneous-delays
   (let [clock         (fsm.sim/simulated-clock)
         advance-clock (fn [ms]
                         (fsm.sim/advance clock ms))
-        states        (atom {})
-        machine       (atom
-                       (impl/machine {:id      :process
-                                      :initial :running
-                                      :states  {:running {:after [{:delay  1000
-                                                                   :target :done}]}
-                                                :done    {}}}))
-
-        scheduler (fsm.d/make-scheduler (fn [state delay-event]
-                                          (swap! states update (:id state)
-                                                 (fn [state]
-                                                   (impl/transition @machine state delay-event))))
-                                        clock
-                                        ;; cache timeouts for each state separately
-                                        :id)]
-
-    (swap! machine assoc :scheduler scheduler)
+        ;; a store that manages several states at once
+        state-store   (fsm.store/many-store)
+        machine       (impl/machine
+                       {:id        :process
+                        :scheduler (fsm.scheduler/make-store-scheduler state-store clock)
+                        :initial   :running
+                        :states    {:running {:after [{:delay  1000
+                                                       :target :done}]}
+                                    :done    {}}})
+        get-state     (fn [id] (:_state (fsm.store/get-state state-store id)))]
     ;; start one state
-    (swap! states assoc :a
-           (impl/initialize @machine {:context {:id :a}}))
-    (is (= (get-in @states [:a :_state]) :running))
+    (fsm.store/initialize state-store machine {:context {:id :a}})
+    (is (= (get-state :a) :running))
     (advance-clock 500)
     ;; a moment later start another
-    (swap! states assoc :b
-           (impl/initialize @machine {:context {:id :b}}))
+    (fsm.store/initialize state-store machine {:context {:id :b}})
     (advance-clock 500)
     ;; enough time has passed for the first to be done
-    (is (= (get-in @states [:a :_state]) :done))
+    (is (= (get-state :a) :done))
     ;; but the second is still pending
-    (is (= (get-in @states [:b :_state]) :running))
+    (is (= (get-state :b) :running))
     ;; until it finishes too
     (advance-clock 500)
-    (is (= (get-in @states [:b :_state]) :done))))
+    (is (= (get-state :b) :done))))
 
 (deftest test-root-entry-and-action
   (let [root-entries (atom 0)
