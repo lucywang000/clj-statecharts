@@ -792,14 +792,19 @@
 
 (defn -do-init
   [fsm]
-  (let [tx            {:source    []
-                       :target    []
-                       :external? true
-                       :domain    []}
-        entry-set     (compute-entry-set fsm [tx])
-        entry-actions (get-entry-actions fsm entry-set)
-        _state        (configuration->_state fsm entry-set)]
-    [_state entry-actions]))
+  (let [tx                     {:source    []
+                                :target    []
+                                :external? true
+                                :domain    []}
+        entry-set              (compute-entry-set fsm [tx])
+        entry-actions          (get-entry-actions fsm entry-set)
+        _state                 (configuration->_state fsm entry-set)
+        _pending-eventless-tx? (has-eventless-transition?
+                                 (map #(resolve-node fsm %)
+                                      entry-set))]
+    [_state entry-actions _pending-eventless-tx?]))
+
+(declare transition)
 
 (defn initialize
   ([fsm]
@@ -814,13 +819,16 @@
                    context
                    (:context fsm))
          event {:type :fsm/init}
-         [_state actions] (-do-init fsm)
+         [_state actions _pending-eventless-tx?] (-do-init fsm)
          state (assoc context
-                 :_state _state
-                 :_actions actions)]
-     (if exec
-       (execute fsm state event {:debug debug})
-       state))))
+                      :_state _state
+                      :_actions actions)
+         new-state (if exec
+                     (execute fsm state event {:debug debug})
+                     state)]
+     (if-not _pending-eventless-tx?
+       new-state
+       (transition fsm new-state :fsm/always {:exec exec :debug debug})))))
 
 (defn -transition-once
   "Do the transition, but would not follow new eventless transitions defined on

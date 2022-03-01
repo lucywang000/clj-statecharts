@@ -1047,3 +1047,56 @@
     ;; until it finishes too
     (advance-clock 500)
     (is (= (get-in @states [:b :_state]) :done))))
+
+(deftest test-root-entry-and-action
+  (let [root-entries (atom 0)
+        root-entry #(swap! root-entries inc)
+        root-actions (atom 0)
+        root-action #(swap! root-actions inc)
+        machine (impl/machine {:id :test
+                               :initial :s1
+                               :entry root-entry
+                               :on {:e1 {:actions root-action}}
+                               :states
+                               {:s1 {:on {:e1_2 :s2}}
+                                :s2 {:on {:e1 :s1}}}})
+        state (impl/initialize machine)]
+    (is (= (:_state state) :s1))
+    (is (= @root-entries 1))
+    (let [state1 (impl/transition machine state :e1_2)]
+      (is (= (:_state state1) :s2)))
+    (let [state2 (impl/transition machine state :e1)]
+      (is (= @root-actions 1))
+      (is (= (:_state state2) :s1))
+      (is (= @root-entries 1))
+      (is (= @root-actions 1)))))
+
+(deftest test-eventless-transtions-on-init-state
+  (let [machine (impl/machine {:id      :test
+                               :initial :s1
+                               :states
+                               {:s1 {:always [{:guard  (constantly true)
+                                               :target :s2}]
+                                     :on     {:e1_3 :s3}}
+                                :s2 {:on {:e2_3 :s3}}
+                                :s3 {:always [{:guard  (constantly true)
+                                               :target :s1}]}}})
+        tx      (fn [state event]
+                  (impl/transition machine state event))
+        state   (impl/initialize machine)]
+    (is (= :s2 (:_state state)))
+    ;; s2--(e2_3)-->s3--(always)-->s1--always-->s2
+    (is (= :s2 (:_state (tx state :e2_3))))))
+
+(deftest test-eventless-transtions-on-init-state-nested
+  (let [machine
+        (impl/machine {:id      :test
+                       :initial :s1
+                       :states
+                       {:s1 {:initial :s1.1
+                             :states  {:s1.1 {:always [{:guard  (constantly true)
+                                                        :target [:> :s2]}]}}}
+                        :s2 {}}})
+
+        state (impl/initialize machine)]
+    (is (= :s2 (:_state state)))))
