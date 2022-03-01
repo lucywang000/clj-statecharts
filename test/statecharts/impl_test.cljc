@@ -1066,7 +1066,6 @@
     (let [state1 (impl/transition machine state :e1_2)]
       (is (= (:_state state1) :s2)))
     (let [state2 (impl/transition machine state :e1)]
-      (is (= @root-actions 1))
       (is (= (:_state state2) :s1))
       (is (= @root-entries 1))
       (is (= @root-actions 1)))))
@@ -1085,7 +1084,7 @@
                   (impl/transition machine state event))
         state   (impl/initialize machine)]
     (is (= :s2 (:_state state)))
-    ;; s2--(e2_3)-->s3--(always)-->s1--always-->s2
+    ;; s2--(e2_3)-->s3--(always)-->s1--(always)-->s2
     (is (= :s2 (:_state (tx state :e2_3))))))
 
 (deftest test-eventless-transtions-on-init-state-nested
