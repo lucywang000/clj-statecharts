@@ -1050,9 +1050,9 @@
 
 (deftest test-root-entry-and-action
   (let [root-entries (atom 0)
-        root-entry #(swap! root-entries inc)
+        root-entry (fn [& _] (swap! root-entries inc))
         root-actions (atom 0)
-        root-action #(swap! root-actions inc)
+        root-action (fn [& _] (swap! root-actions inc))
         machine (impl/machine {:id :test
                                :initial :s1
                                :entry root-entry
