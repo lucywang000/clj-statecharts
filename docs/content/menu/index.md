@@ -16,3 +16,4 @@ headless = true
   - [Re-frame integration]({{< relref "/docs/integration/re-frame" >}})
 - Internals
   - [Difference from XState]({{< relref "/docs/xstate" >}})
+  - [Stores]({{< relref "/docs/stores" >}})

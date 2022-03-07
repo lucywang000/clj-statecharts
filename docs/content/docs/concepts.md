@@ -47,7 +47,7 @@ The current state is expressed as a map like this:
   "[context](https://en.wikipedia.org/wiki/UML_state_machine#Extended_states)"
   of the state machine.
 
-## State & Service
+## State & Service {#state-and-service}
 
 How are machine/state connected to the higher level services?
 
