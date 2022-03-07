@@ -9,7 +9,7 @@
     (let [timeout-id (clock/setTimeout clock #(dispatch fsm state event) delay)]
       (swap! timeout-ids assoc event timeout-id)))
 
-  (unschedule [_ _state event]
+  (unschedule [_ _fsm _state event]
     (when-let [timeout-id (get @timeout-ids event)]
       (clock/clearTimeout clock timeout-id)
       (swap! timeout-ids dissoc event))))
@@ -29,7 +29,7 @@
     (let [state-id   (store/unique-id store state)
           timeout-id (clock/setTimeout clock #(store/transition store fsm state event nil) delay)]
       (swap! timeout-ids assoc-in [state-id event] timeout-id)))
-  (unschedule [_ state event]
+  (unschedule [_ _fsm state event]
     (let [state-id   (store/unique-id store state)
           timeout-id (get-in @timeout-ids [state-id event])]
       (when timeout-id

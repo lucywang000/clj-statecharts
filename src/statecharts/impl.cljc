@@ -241,7 +241,7 @@
       (fsm.d/schedule scheduler fsm state event event-delay))
 
     (= action :fsm/unschedule-event)
-    (fsm.d/unschedule scheduler state event)
+    (fsm.d/unschedule scheduler fsm state event)
 
     :else
     (throw (ex-info (str "Unknown internal action " action) internal-action))))

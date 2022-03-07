@@ -4,7 +4,7 @@
 
 (defprotocol IScheduler
   (schedule [this fsm state event delay])
-  (unschedule [this state event]))
+  (unschedule [this fsm state event]))
 
 (defn scheduler? [x]
   (satisfies? IScheduler x))
