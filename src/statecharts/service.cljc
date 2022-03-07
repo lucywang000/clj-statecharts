@@ -29,7 +29,8 @@
       (store/initialize store fsm nil)))
   (send [_ event]
     (let [old-state (store/get-state store nil)]
-      (store/transition store fsm old-state event transition-opts)))
+      (store/transition store fsm old-state event transition-opts))
+    (store/get-state store nil))
   (add-listener [_ id listener]
     ;; Kind of gross to reach down into the store's internals. Then again, the fact
     ;; that the store is a single-store is an implementation detail known only to
