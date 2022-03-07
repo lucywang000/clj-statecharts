@@ -4,6 +4,9 @@
             [statecharts.scheduler :as scheduler])
   (:refer-clojure :exclude [send]))
 
+(defn attach-fsm-scheduler [fsm store clock]
+  (assoc fsm :scheduler (scheduler/make-store-scheduler store clock)))
+
 (defprotocol IService
   (start [this])
   (send [this event])
@@ -14,7 +17,7 @@
   (fn [_ _ old new]
     (f old new)))
 
-(deftype Service [fsm
+(deftype Service [^:volatile-mutable fsm
                   store
                   ^:volatile-mutable running
                   clock
@@ -33,8 +36,7 @@
     ;; this namespace.
     (add-watch (:state* store) id (wrap-listener listener)))
   (reload [this fsm_]
-    ;; TODO: this is now a no-op. Remove from protocol?
-    nil))
+    (set! fsm (attach-fsm-scheduler fsm_ store clock))))
 
 (defn default-opts []
   {:clock (clock/wall-clock)})
@@ -46,7 +48,7 @@
    (let [{:keys [clock
                  transition-opts]} (merge (default-opts) opts)
          store (store/single-store)]
-     (Service. (assoc fsm :scheduler (scheduler/make-store-scheduler store clock))
+     (Service. (attach-fsm-scheduler fsm store clock)
                ;; state store
                store
                ;; running
