@@ -987,7 +987,7 @@
         advance-clock (fn [ms]
                         (fsm.sim/advance clock ms))
         ;; a store that manages a single state
-        state-store   (fsm.store/lone-store)
+        state-store   (fsm.store/single-store)
         machine       (impl/machine
                        {:id        :process
                         :scheduler (fsm.scheduler/make-store-scheduler state-store clock)

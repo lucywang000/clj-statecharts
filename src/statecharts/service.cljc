@@ -28,9 +28,9 @@
     (let [old-state (store/get-state store nil)]
       (store/transition store fsm old-state event transition-opts)))
   (add-listener [_ id listener]
-    ;; Kind of gross to reach down into store's internals. Then again, the fact
-    ;; that the store a lone-store is an implementation detail known only to this
-    ;; namespace.
+    ;; Kind of gross to reach down into the store's internals. Then again, the fact
+    ;; that the store is a single-store is an implementation detail known only to
+    ;; this namespace.
     (add-watch (:state* store) id (wrap-listener listener)))
   (reload [this fsm_]
     ;; TODO: this is now a no-op. Remove from protocol?
@@ -45,7 +45,7 @@
   ([fsm opts]
    (let [{:keys [clock
                  transition-opts]} (merge (default-opts) opts)
-         store (store/lone-store)]
+         store (store/single-store)]
      (Service. (assoc fsm :scheduler (scheduler/make-store-scheduler store clock))
                ;; state store
                store

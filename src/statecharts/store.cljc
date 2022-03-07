@@ -21,7 +21,7 @@
     "Get the current value of a state, by its id."))
 
 
-(defrecord LoneStore [state*]
+(defrecord SingleStore [state*]
   IStore
   (unique-id [_ _state] :context)
   (initialize [_ machine opts]
@@ -31,10 +31,10 @@
   (get-state [_ _]
     @state*))
 
-(defn lone-store
-  "A lone-store stores the current value of a single state."
+(defn single-store
+  "A single-store stores the current value of a single state."
   []
-  (LoneStore. (atom nil)))
+  (SingleStore. (atom nil)))
 
 (defrecord ManyStore [states*]
   IStore
