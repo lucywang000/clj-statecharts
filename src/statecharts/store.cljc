@@ -36,32 +36,42 @@
   []
   (SingleStore. (atom nil)))
 
-(defrecord ManyStore [states*]
+(defrecord ManyStore [states* id]
   IStore
-  (unique-id [_ state] (:id state))
+  (unique-id [_ state] (get state id))
   (initialize [this machine opts]
     (let [state (-> (impl/initialize machine opts)
-                    (update :id #(or % (gensym))))]
+                    (update id #(or % (gensym))))]
       (swap! states* assoc (unique-id this state) state)
       state))
   (transition [this machine state event opts]
-    (let [id (unique-id this state)]
-      (swap! states* update id #(impl/transition machine % event opts))
-      (get-state this id)))
+    (let [state-id (unique-id this state)]
+      (swap! states* update state-id #(impl/transition machine % event opts))
+      (get-state this state-id)))
   (get-state [_ id]
     (get @states* id)))
 
 (defn many-store
   "A many-store stores the current values of many states.
 
-  The `opts` provided to `init` should configure the state to have a unique `:id`.
-  This ensures that the state can be transitioned later, even by a scheduler, and
-  is neccessary for calling `get-state`. E.g.
+  The `opts` provided to `init` should configure the state to have a unique id.
+  This ensures that the state can be identified and transitioned later, by both
+  external and scheduled events.
 
+  By default, a many-store expects the id to be `:id`.
   ```clojure
   (let [store (store/many-store)]
     (store/initialize store fsm {:context {:id 1}})
     (store/get-state store 1))
-  ```"
-  []
-  (ManyStore. (atom {})))
+  ```
+  The id can be configured by providing an `:id` key in the many-store
+  configuration options.
+  ```clojure
+  (let [store (store/many-store {:id :my-id})]
+    (store/initialize store fsm {:context {:my-id 1}})
+    (store/get-state store 1))
+  ```
+  "
+  ([] (many-store {}))
+  ([{:keys [id] :or {id :id}}]
+   (ManyStore. (atom {}) id)))
