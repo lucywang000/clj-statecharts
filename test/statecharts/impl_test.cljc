@@ -972,13 +972,13 @@
 
 
 (comment
-  (let [fsm (parallel-machine)
-        state (impl/initialize fsm)]
-    (simple-benchmark []
-                      (impl/transition fsm
-                                      state
-                                      :e12)
-                      1000))
+  #?(:cljs (let [fsm (parallel-machine)
+         state (impl/initialize fsm)]
+     (simple-benchmark []
+                       (impl/transition fsm
+                                        state
+                                        :e12)
+                       1000)))
   ())
 
 (deftest test-unscheduling-delayed-transitions
