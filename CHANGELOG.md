@@ -1,3 +1,7 @@
+## Unreleased
+
+- Structure scheduler to interoperate with data stores #10 (thanks to @mainej)
+
 ## v0.1.2 2022/3/1
 
 - support eventless transitions on initial states
