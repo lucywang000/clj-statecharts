@@ -22,7 +22,7 @@
    (service/send service event)))
 
 (defn state [service]
-  @(.-state service))
+  (service/state service))
 
 (defn value [service]
   (-> service state :_state))

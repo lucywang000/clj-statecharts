@@ -10,6 +10,7 @@
 (defprotocol IService
   (start [this])
   (send [this event])
+  (state [this])
   (add-listener [this id listener])
   (reload [this fsm]))
 
@@ -27,6 +28,8 @@
     (when-not running
       (set! running true)
       (store/initialize store fsm nil)))
+  (state [this]
+    (store/get-state store nil))
   (send [_ event]
     (let [old-state (store/get-state store nil)]
       (store/transition store fsm old-state event transition-opts))
