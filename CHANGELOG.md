@@ -1,4 +1,4 @@
-## Unreleased
+## v0.1.3 2022/3/17
 
 - Structure scheduler to interoperate with data stores #10 (thanks to @mainej)
 
