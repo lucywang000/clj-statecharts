@@ -1,5 +1,5 @@
 (ns statecharts.service-test
-  (:require [statecharts.core :as fsm :refer [assign service]]
+  (:require [statecharts.core :as fsm :refer [assign]]
             [statecharts.service]
             [statecharts.sim :as fsm.sim]
             [clojure.test :refer [deftest is are use-fixtures testing]]))
@@ -32,13 +32,20 @@
                         {:delay 1000 :target :s6}]}
            :s5 {}
            :s6 {}}})
-        service       (fsm/service fsm {:clock (fsm.sim/simulated-clock)})
-        is-state      #(is (= (:_state @(.-state service)) %))
-        is-x          #(is (= (:x @(.-state service)) %))
+        clock         (fsm.sim/simulated-clock)
+        service       (fsm/service fsm {:clock clock})
+        state*        (atom nil)
+        is-state      #(is (= (:_state @state*) %))
+        is-x          #(is (= (:x @state*) %))
         advance-clock (fn [ms]
                         ;; (println '--------------)
-                        (fsm.sim/advance
-                         (.-clock ^statecharts.service.Service service) ms))]
+                        (fsm.sim/advance clock ms))]
+
+      (statecharts.service/add-listener
+       service
+       [::test] ;; listener id
+       (fn [_ new-state]
+         (reset! state* new-state)))
 
       (fsm/start service)
       (is-state :s2)
