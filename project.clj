@@ -8,7 +8,7 @@
   :aliases {"kaocha" ["with-profile" "+dev" "run" "-m" "kaocha.runner"]
             "test"   ["version"]}
 
-  :dependencies [[org.clojure/clojure "1.10.3" :scope "provided"]
+  :dependencies [[org.clojure/clojure "1.11.0" :scope "provided"]
                  [re-frame "1.2.0"
                   :scope "provided"
                   :exclusions [cljsjs/react
@@ -17,7 +17,7 @@
                  [day8.re-frame/test "0.1.5"
                   :scope "provided"
                   :exclusions [re-frame]]
-                 [metosin/malli "0.8.3"]]
+                 [metosin/malli "0.8.4"]]
 
   :deploy-repositories [["clojars" {:url           "https://clojars.org/repo"
                                     :username      :env/clojars_user
@@ -44,7 +44,7 @@
                                   [org.clojure/clojurescript "1.11.4"]
                                   [org.clojure/test.check "1.1.1"]
                                   [expectations/clojure-test "1.2.1"]
-                                  [lambdaisland/kaocha "1.63.998"]
+                                  [lambdaisland/kaocha "1.64.1010"]
                                   [hashp "0.2.1"]
                                   [nubank/matcher-combinators "3.3.1"
                                    :exclusions [midje]]
