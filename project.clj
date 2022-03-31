@@ -1,4 +1,4 @@
-(defproject clj-statecharts "0.1.3"
+(defproject clj-statecharts "0.1.4"
   :description "StateChart for Clojure(script)"
   :url "https://github.com/lucywang000/clj-statecharts"
   :license {:name "Eclipse Public License"

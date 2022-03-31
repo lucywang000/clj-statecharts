@@ -1,3 +1,7 @@
+## v0.1.4 2022/3/31
+
+- include current state in the error message when reporting unknown event
+
 ## v0.1.3 2022/3/17
 
 - Structure scheduler to interoperate with data stores #10 (thanks to @mainej)
