@@ -738,7 +738,7 @@
             (when-not (->> txs
                          (map first)
                          (some identity))
-              (throw (ex-info (str "fsm " (:id fsm) " got unknown event " (:type event))
+              (throw (ex-info (str "fsm " (:id fsm) " got unknown event " (:type event) " when in state " _state)
                               {:_state _state}))))
         txs (->> txs
                  (map second)
