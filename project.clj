@@ -46,6 +46,6 @@
                                   [expectations/clojure-test "1.2.1"]
                                   [lambdaisland/kaocha "1.64.1010"]
                                   [hashp "0.2.1"]
-                                  [nubank/matcher-combinators "3.3.1"
+                                  [nubank/matcher-combinators "3.4.0"
                                    :exclusions [midje]]
                                   [kaocha-noyoda "2019-06-03"]]}})
