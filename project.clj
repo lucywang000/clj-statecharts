@@ -1,4 +1,4 @@
-(defproject clj-statecharts "0.1.4"
+(defproject clj-statecharts "0.1.5"
   :description "StateChart for Clojure(script)"
   :url "https://github.com/lucywang000/clj-statecharts"
   :license {:name "Eclipse Public License"
@@ -8,7 +8,7 @@
   :aliases {"kaocha" ["with-profile" "+dev" "run" "-m" "kaocha.runner"]
             "test"   ["version"]}
 
-  :dependencies [[org.clojure/clojure "1.11.0" :scope "provided"]
+  :dependencies [[org.clojure/clojure "1.11.1" :scope "provided"]
                  [re-frame "1.2.0"
                   :scope "provided"
                   :exclusions [cljsjs/react
@@ -44,8 +44,8 @@
                                   [org.clojure/clojurescript "1.11.4"]
                                   [org.clojure/test.check "1.1.1"]
                                   [expectations/clojure-test "1.2.1"]
-                                  [lambdaisland/kaocha "1.64.1010"]
+                                  [lambdaisland/kaocha "1.65.1029"]
                                   [hashp "0.2.1"]
-                                  [nubank/matcher-combinators "3.4.0"
+                                  [nubank/matcher-combinators "3.5.0"
                                    :exclusions [midje]]
                                   [kaocha-noyoda "2019-06-03"]]}})
