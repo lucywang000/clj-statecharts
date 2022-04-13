@@ -51,7 +51,7 @@
 
 (def T_Transition
   [:vector {:decode/fsm canon-transitions}
-   [:map {:closed true}
+   [:map
     [:target {:optional true} T_Target]
     [:guard {:optional true} [:fn ifn?]]
     [:actions {:optional true} T_Actions]]])
@@ -109,7 +109,7 @@
     x))
 
 (def T_DelayedTransition
-  [:map {:closed true}
+  [:map
    [:delay T_DelayExpression]
    [:target {:optional true} T_Target]
    [:guard {:optional true} [:fn ifn?]]
@@ -137,8 +137,7 @@
 (def T_States
   [:schema
    {:registry
-            {::state [:map {:closed true
-                            :decode/fsm {:leave (comp
+            {::state [:map {:decode/fsm {:leave (comp
                                                  insert-eventless-transitions
                                                  insert-delayed-transitions)}}
                       T_After
@@ -161,7 +160,7 @@
 
 (def T_Integrations
   [:integrations {:optional true}
-   [:map {:closed true}
+   [:map
     [:re-frame {:optional true}
      [:map
       [:path any?]
@@ -272,7 +271,7 @@
      the event
   2. :id of each level to resolve the target state node.
   3. entry/exit: collect the actions during a transtion transition."
-  [:map {:closed true}
+  [:map
    [:id [:maybe keyword?]]
    T_Transitions
    T_Entry
@@ -420,7 +419,7 @@
    [:exit {:optional true} :any]])
 
 (def RT_TX
-  [:map {:closed true}
+  [:map
    [:source {:optional true} RT_NodePath]
    [:target {:optional true} RT_NodePath]
    [:domain {:optional true} RT_NodePath]
