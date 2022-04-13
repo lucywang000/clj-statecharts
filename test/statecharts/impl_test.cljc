@@ -1087,3 +1087,22 @@
 
         state (impl/initialize machine)]
     (is (= :s2 (:_state state)))))
+
+(deftest test-allow-extra-keys
+  (let [error (volatile! nil)
+        machine (try
+                  (impl/machine
+                   {:id :lights
+                    :my-custom-id :lights-v0
+                    :initial :red
+                    :context nil
+                    :states {:green {:description "Green Light"
+                                     :on {:timer {:target :yellow}}}
+                             :yellow {:on {:timer {:target :red
+                                                   :description "Don't rush!"}}}
+                             :red {:on {:timer :green}}}
+                    :on {:power-outage :red}})
+                  (catch #?(:clj clojure.lang.ExceptionInfo :cljs js/Error) e
+                    (vreset! error e)
+                    nil))]
+    (is (some? machine) (ex-data @error))))
