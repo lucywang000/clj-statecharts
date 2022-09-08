@@ -10,6 +10,8 @@
                          ^:volatile-mutable id
                          ^:volatile-mutable now_]
   Clock
+  (getTimeMillis [_]
+    now_)
   (setTimeout [_ f delay]
     (set! id (inc id))
     (swap! events assoc id {:f f :event-time (+ now_ delay)})

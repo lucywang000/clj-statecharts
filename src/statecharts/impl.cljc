@@ -3,6 +3,7 @@
             [malli.transform :as mt]
             [clojure.set]
             [malli.error]
+            [statecharts.clock :refer [*clock*]]
             [statecharts.delayed
              :as fsm.d
              :refer [insert-delayed-transitions
@@ -250,19 +251,22 @@
   ([fsm state event]
    (execute fsm state event nil))
   ([fsm state event {:keys [debug]}]
-   (reduce (fn [new-state action]
-             (if (internal-action? action)
-               (do
-                 (execute-internal-action fsm new-state event action)
-                 new-state)
-               (let [retval (action new-state event)]
-                 (if (instance? ContextAssignment retval)
-                   (.-v retval)
-                   new-state))))
-           (cond-> state
-             (not debug)
-             (dissoc :_actions))
-           (:_actions state))))
+   (binding [*clock* (some-> fsm
+                             :scheduler
+                             .-clock)]
+     (reduce (fn [new-state action]
+               (if (internal-action? action)
+                 (do
+                   (execute-internal-action fsm new-state event action)
+                   new-state)
+                 (let [retval (action new-state event)]
+                   (if (instance? ContextAssignment retval)
+                     (.-v retval)
+                     new-state))))
+             (cond-> state
+               (not debug)
+               (dissoc :_actions))
+             (:_actions state)))))
 
 (def PathElement
   "Schema of an element of a expanded path. We need the

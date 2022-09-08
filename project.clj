@@ -9,7 +9,7 @@
             "test"   ["version"]}
 
   :dependencies [[org.clojure/clojure "1.11.1" :scope "provided"]
-                 [re-frame "1.2.0"
+                 [re-frame "1.3.0"
                   :scope "provided"
                   :exclusions [cljsjs/react
                                cljsjs/react-dom
@@ -17,7 +17,7 @@
                  [day8.re-frame/test "0.1.5"
                   :scope "provided"
                   :exclusions [re-frame]]
-                 [metosin/malli "0.8.4"]]
+                 [metosin/malli "0.8.9"]]
 
   :deploy-repositories [["clojars" {:url           "https://clojars.org/repo"
                                     :username      :env/clojars_user
@@ -41,11 +41,11 @@
 
                    :source-paths ["dev/src" "local/src"]
                    :dependencies [[philoskim/debux "0.8.2"]
-                                  [org.clojure/clojurescript "1.11.4"]
+                                  [org.clojure/clojurescript "1.11.60"]
                                   [org.clojure/test.check "1.1.1"]
                                   [expectations/clojure-test "1.2.1"]
-                                  [lambdaisland/kaocha "1.65.1029"]
+                                  [lambdaisland/kaocha "1.69.1069"]
                                   [hashp "0.2.1"]
-                                  [nubank/matcher-combinators "3.5.0"
+                                  [nubank/matcher-combinators "3.5.1"
                                    :exclusions [midje]]
                                   [kaocha-noyoda "2019-06-03"]]}})
