@@ -251,8 +251,7 @@
   ([fsm state event]
    (execute fsm state event nil))
   ([fsm state event {:keys [debug]}]
-   (binding [*clock* (some-> fsm
-                             :scheduler
+   (binding [*clock* (some-> (:scheduler fsm)
                              .-clock)]
      (reduce (fn [new-state action]
                (if (internal-action? action)
