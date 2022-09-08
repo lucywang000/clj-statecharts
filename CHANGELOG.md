@@ -1,3 +1,8 @@
+## v0.1.6 2022/9/8
+
+- expose `clock/now` to actions fn to facilitate unit-testing delayed
+  transitions. See commit [8541631](https://github.com/lucywang000/clj-statecharts/commit/8541631670dddb599091706e14849b4e6ed7377c)
+
 ## v0.1.5 2022/4/13
 
 - the fsm schemas are now open instead of closed (#11)
