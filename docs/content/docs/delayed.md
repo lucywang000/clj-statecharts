@@ -49,6 +49,25 @@ the reconnection delay could be calculated as an exponential backoff.
   :connected    {:on {:connection-closed :disconnected}}}}
 ```
 
+## Unit Testing a StateCharts That Uses Delayed Transitions
+
+When unit-testing a statecharts that uses delayed transitions, we don't want to
+really wait for the exact delay to timeout.
+
+To facilitate this, clj-statecharts provides a "simulated clock" to be used in
+unit tests. This clock could be manipulated by calling its `advance` method.
+
+If you are interested, see this
+[test case](https://github.com/lucywang000/clj-statecharts/blob/v0.1.5/test/statecharts/integrations/re_frame_test.cljc#L48-L60)
+for inspiration.
+
+`Note`: if in your actions code you need to get the current time value, you
+shall not use OS API (i.e. `(js/Date.now)` or `(System/currentTimeMillis)`), but
+use `(statecharts.clock/now)`. The latter returns the current time in
+milliseconds, and when the clock is a simulated one, it would return the value
+of the simulated time. This is the only way to make your statecharts
+unit-testing-friendly.
+
 ## Notes
 
 * Delayed transitions currently only works in the CLJS. CLJ support is going to be added soon.
