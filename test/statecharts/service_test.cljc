@@ -1,13 +1,17 @@
 (ns statecharts.service-test
   (:require [statecharts.core :as fsm :refer [assign]]
             [statecharts.service]
+            [statecharts.clock :as clock]
             [statecharts.sim :as fsm.sim]
             [clojure.test :refer [deftest is are use-fixtures testing]]))
 
 
-(deftest test-service
+(deftest ^:focus test-service
   (let [inc-x         (fn [context & _]
                     (update context :x inc))
+        now (atom nil)
+        capture-now (fn [& _]
+                      (reset! now (clock/now)))
         fsm
         (fsm/machine
          {:id      :fsm
@@ -23,7 +27,7 @@
                                       1000
                                       2000))
                          :actions (assign inc-x)}]}
-           :s2 {:after [{:delay 1000 :target :s3}]}
+           :s2 {:after [{:delay 1000 :actions capture-now :target :s3}]}
            :s3 {:after [{:delay 1000 :target :s4}]}
            :s4 {:after [{:delay  1000
                          :target :s5
@@ -57,6 +61,7 @@
       (is-state :s2)
 
       (advance-clock 1000)
+      (is (= @now 1000))
       (is-state :s3)
 
       (advance-clock 1000)
