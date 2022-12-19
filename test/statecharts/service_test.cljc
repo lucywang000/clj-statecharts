@@ -6,7 +6,7 @@
             [clojure.test :refer [deftest is are use-fixtures testing]]))
 
 
-(deftest ^:focus test-service
+(deftest test-service
   (let [inc-x         (fn [context & _]
                     (update context :x inc))
         now (atom nil)

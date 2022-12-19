@@ -1088,7 +1088,7 @@
         state (impl/initialize machine)]
     (is (= :s2 (:_state state)))))
 
-(deftest test-allow-extra-keys
+#_(deftest test-allow-extra-keys
   (let [error (volatile! nil)
         machine (try
                   (impl/machine
