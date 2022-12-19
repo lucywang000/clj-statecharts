@@ -1,3 +1,8 @@
+## v0.1.7 2022/12/19
+
+- Revert 0.1.5 changes. Keep fsm schema closed is easier for catching typos early
+  on.
+
 ## v0.1.6 2022/9/8
 
 - expose `clock/now` to actions fn to facilitate unit-testing delayed
