@@ -555,6 +555,7 @@
                      :b 0}
            :regions
            {:p1 {:initial :p11
+                 :on {:e21 [:p1 :p11]}
                  :states {:p11 {:on {:e12 {:target :p12
                                            :actions inc-a}}}
                           :p12 {}}}
@@ -600,7 +601,8 @@
                        :p3.c :p3c1}}))
 
         new-state (impl/transition test-machine state :e12)
-        new-state2 (impl/transition test-machine new-state :e331)]
+        new-state2 (impl/transition test-machine new-state :e331)
+        new-state3 (impl/transition test-machine new-state2 :e21)]
     (is (= new-state
            {:_state {:p1 :p12
                      :p2 :p23
@@ -621,7 +623,9 @@
             :a 1
             :b 2
             :c 1
-            :d 2}))))
+            :d 2}))
+    (is (= new-state3 (assoc-in new-state2 [:_state :p1] :p11)))
+    ))
 
 (defn alt-parallel-machine
   []
