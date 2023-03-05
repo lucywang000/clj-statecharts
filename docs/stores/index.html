@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" dir=>
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Stores #  clj-statecharts is mostly stateless. But it will often be used in a state-ful environment. The state objects will need to be stored somewhere, in a service, a re-frame db, or somewhere of your choosing.
+Over time events will transition the state objects, which need to be updated in the storage location. Much of the time the events will come from your code calling transition. In these cases, it might be clear how to update the storage location.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Stores" />
+<meta property="og:description" content="Stores #  clj-statecharts is mostly stateless. But it will often be used in a state-ful environment. The state objects will need to be stored somewhere, in a service, a re-frame db, or somewhere of your choosing.
+Over time events will transition the state objects, which need to be updated in the storage location. Much of the time the events will come from your code calling transition. In these cases, it might be clear how to update the storage location." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://lucywang000.github.io/clj-statecharts/docs/stores/" />
+
+<title>Stores | clj-statecharts</title>
+<link rel="manifest" href="/clj-statecharts/manifest.json">
+<link rel="icon" href="/clj-statecharts/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/clj-statecharts/book.min.6cd8553a6854f4812343f0f0c8baca31271e686434f381fbe3c7226f66639176.css" integrity="sha256-bNhVOmhU9IEjQ/DwyLrKMSceaGQ084H748cib2ZjkXY=">
+<script defer src="/clj-statecharts/en.search.min.e8952b2e318d5a780356baeec4729cee3fbdb8a72e8ce764057f9b0ab5e73e1d.js" integrity="sha256-6JUrLjGNWngDVrruxHKc7j&#43;9uKcujOdkBX&#43;bCrXnPh0="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir=>
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      
+  <nav>
+<h2 class="book-brand">
+  <a href="/clj-statecharts"><span>clj-statecharts</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  <ul>
+<li><a href="/clj-statecharts/">Introduction</a></li>
+<li><a href="/clj-statecharts/docs/get-started/">Get Started</a></li>
+<li><a href="/clj-statecharts/docs/concepts/">Concepts: Machine, State, Service</a></li>
+<li><a href="/clj-statecharts/docs/actions/">Actions</a></li>
+<li><a href="/clj-statecharts/docs/transitions/">Transitions</a></li>
+<li><a href="/clj-statecharts/docs/hierarchical-states/">Hierarchical States</a></li>
+<li><a href="/clj-statecharts/docs/parallel-states/">Parallel States</a></li>
+<li><a href="/clj-statecharts/docs/identifying-states/">Identifying States</a></li>
+<li><a href="/clj-statecharts/docs/guards/">Guarded Transitions</a></li>
+<li><a href="/clj-statecharts/docs/delayed/">Delayed Transitions</a></li>
+<li>Integration
+<ul>
+<li><a href="/clj-statecharts/docs/integration/re-frame/">Re-frame integration</a></li>
+</ul>
+</li>
+<li>Internals
+<ul>
+<li><a href="/clj-statecharts/docs/xstate/">Difference from XState</a></li>
+<li><a href="/clj-statecharts/docs/stores/"class=active>Stores</a></li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script>
+
+
+ 
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/clj-statecharts/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Stores</strong>
+
+  <label for="toc-control">
+    
+    <img src="/clj-statecharts/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  <nav id="TableOfContents"></nav>
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="stores">
+  Stores
+  <a class="anchor" href="#stores">#</a>
+</h1>
+<p>clj-statecharts is mostly stateless. But it will often be used in a state-ful
+environment. The state objects will need to be stored somewhere, in a
+<a href="/clj-statecharts/docs/concepts/#state-and-service">service</a>, a <a href="/clj-statecharts/docs/integration/re-frame/">re-frame
+db</a>, or somewhere of your choosing.</p>
+<p>Over time events will transition the state objects, which need to be updated in
+the storage location. Much of the time the events will come from your code
+calling <code>transition</code>. In these cases, it might be clear how to update the
+storage location. However if you use <a href="/clj-statecharts/docs/delayed/">delayed
+transitions</a> clj-statecharts itself needs to
+update the storage location in the same way that your code would.
+clj-statecharts does not dictate how the storage works; instead it provides an
+interface IStore that lets external transitioners coordinate with the internal
+delayed transitions to update the storage location in the same way.</p>
+<p>Most users of clj-statecharts will not need to understand IStore intimately—they
+can use a service or one of the existing integrations, which manage an IStore
+instance internally. However, integration implementors should use this project&rsquo;s
+examples of how stores are created, connected to schedulers, and used as a
+facade for <code>initialize</code> and <code>transition</code>. You can find such examples in the
+implementation of services, the re-frame integration, and in the tests. Search
+for <code>make-store-scheduler</code>.</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+  <div>
+    <a class="flex align-center" href="https://github.com/lucywang000/clj-statecharts/blob/master/docs/content//docs/stores.md" target="_blank" rel="noopener">
+      <img src="/clj-statecharts/svg/edit.svg" class="book-icon" alt="Edit" />
+      <span>Edit this page</span>
+    </a>
+  </div>
+
+</div>
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      
+  <nav id="TableOfContents"></nav>
+
+ 
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
