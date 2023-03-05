@@ -818,8 +818,12 @@
      :or {exec true
           context nil}
      :as _opts}]
-   (let [context (if (some? context)
-                   context
+   (let [default-context (:context fsm)
+         context (if (some? context)
+                   (if (and (map? default-context)
+                            (map? context))
+                     (merge default-context context)
+                     context)
                    (:context fsm))
          event {:type :fsm/init}
          [_state actions _pending-eventless-tx?] (-do-init fsm)

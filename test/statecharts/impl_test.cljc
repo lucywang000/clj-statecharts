@@ -2,9 +2,9 @@
   (:require [statecharts.impl :as impl :refer [assign]]
             [statecharts.sim :as fsm.sim]
             [statecharts.scheduler :as fsm.scheduler]
-            [statecharts.store :as fsm.store]
-            [clojure.test :refer [deftest is are use-fixtures testing]]
-            #?(:clj [kaocha.stacktrace])))
+            [statecharts.store :as fsm.store] [clojure.test :refer [deftest is are use-fixtures testing]]
+            #?(:clj [kaocha.stacktrace])
+            [statecharts.core :as fsm]))
 
 #?(:clj
    (alter-var-root
@@ -1110,3 +1110,17 @@
                     (vreset! error e)
                     nil))]
     (is (some? machine) (ex-data @error))))
+
+(deftest test-merge-context-with-default-context
+  (let [machine (impl/machine
+                  {:id :test
+                   :initial :s0
+                   :context {:foo 1
+                             :bar 2}
+                   :states {:s0 {}}})]
+    (let [{:keys [foo bar baz]}
+          (fsm/initialize machine {:context {:bar 3
+                                             :baz 4}})]
+      (is (= foo 1))
+      (is (= bar 3))
+      (is (= baz 4)))))
