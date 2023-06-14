@@ -1124,3 +1124,20 @@
       (is (= foo 1))
       (is (= bar 3))
       (is (= baz 4)))))
+
+(deftest test-keyword-guard
+  (let [machine (impl/machine
+                  {:id :test
+                   :initial :s0
+                   :context {:k1 :v1}
+                   :states {:s0 {:on {:e0 {:target :s1
+                                           :guard :foo}
+                                      :e1 {:target :s1
+                                           :guard :k1}}}
+                            :s1 {}}})
+        state (fsm/initialize machine)
+        jumps-to (fn [event new-state]
+                   (is (= new-state
+                          (:_state (fsm/transition machine state event)))))]
+    (is (jumps-to :e0 :s0))
+    (is (jumps-to :e1 :s1))))

@@ -54,3 +54,32 @@
   (if (= 1 (count x))
     (first x)
     x))
+
+(defn complement-state-key-guard
+  "If we use `(complement :foo)` as a guard fn, it would always return true
+  because the guard fn is called with two args: state and event. When the key is
+  missing in the state the event would be treated as the defualt value for the
+  keyword ifn.
+
+  Instead, use this function to define the guard. For instance:
+
+  {:target :login
+   :guard (complement-state-key-guard :logged-in)}
+  "
+  [state-key]
+  (fn [state & _]
+    (not (get state state-key))))
+
+(defn state-key-guard
+  "If we use `:foo` as a guard fn, it would always return true because the guard
+  fn is called with two args: state and event. When the key is missing in the
+  state the event would be treated as the defualt value for the keyword ifn.
+
+  Instead, use this function to define the guard. For instance:
+
+  {:target :dashboard
+   :guard (state-key-guard :logged-in)}
+  "
+  [state-key]
+  (fn [state & _]
+    (not (get state state-key))))

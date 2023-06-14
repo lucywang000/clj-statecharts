@@ -549,6 +549,14 @@
     :else
     (find-least-common-compound-ancessor fsm source target)))
 
+(defn check-guard
+  [guard state input-event]
+  ;; if the guard is a keyword and the keyword is missing in the state, when we
+  ;; call (guard state event) we always get a `true`.
+  (if (keyword? guard)
+    (guard state)
+    (guard state input-event)))
+
 (defn select-one-tx
   "Given an atomic node and an event, find the first satistifed transition by
   walking from the node and then its ancestors, until the root.
@@ -567,7 +575,7 @@
                              (some (fn [{:keys [guard]
                                          :as tx}]
                                      (when (or (not guard)
-                                               (guard state input-event))
+                                               (check-guard guard state input-event))
                                        (dissoc tx :guard)))
                                    txs))
         found (volatile! false)
