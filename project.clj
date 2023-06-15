@@ -17,7 +17,7 @@
                  [day8.re-frame/test "0.1.5"
                   :scope "provided"
                   :exclusions [re-frame]]
-                 [metosin/malli "0.8.9"]]
+                 [metosin/malli "0.11.0"]]
 
   :deploy-repositories [["clojars" {:url           "https://clojars.org/repo"
                                     :username      :env/clojars_user
@@ -40,12 +40,12 @@
                                 (require 'debux.core)]
 
                    :source-paths ["dev/src" "local/src"]
-                   :dependencies [[philoskim/debux "0.8.2"]
+                   :dependencies [[philoskim/debux "0.8.3"]
                                   [org.clojure/clojurescript "1.11.60"]
                                   [org.clojure/test.check "1.1.1"]
                                   [expectations/clojure-test "1.2.1"]
-                                  [lambdaisland/kaocha "1.69.1069"]
-                                  [hashp "0.2.1"]
-                                  [nubank/matcher-combinators "3.5.1"
+                                  [lambdaisland/kaocha "1.85.1342"]
+                                  [hashp "0.2.2"]
+                                  [nubank/matcher-combinators "3.8.5"
                                    :exclusions [midje]]
                                   [kaocha-noyoda "2019-06-03"]]}})
