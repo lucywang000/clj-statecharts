@@ -82,4 +82,4 @@
   "
   [state-key]
   (fn [state & _]
-    (not (get state state-key))))
+    (get state state-key)))

@@ -47,7 +47,7 @@ Entry actions are defined on a state, and are executed whenever this state is en
 
 ### Method Signature of the Action Functions
 
-The action function is invoked with two arguments: `(state event)`
+The action function is invoked with two arguments: `(action-fn state event)`
 
 * state is the current state
 * event is the event that triggers the transition and execution of the action

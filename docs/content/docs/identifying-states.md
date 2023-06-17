@@ -20,7 +20,7 @@ There are other ways to represent a state in transition:
 * A keyword `:foo` is short for `[:foo]`
 * If the first element of the vector of keywords is special keyword
   `:.`, it represents a child state of the current state.
-* A `nil` target represents a internal self-transition
+* A `nil` target represents an internal self-transition
 
 Some examples:
 
